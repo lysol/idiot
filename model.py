@@ -40,15 +40,15 @@ class Issue(SimpleModel):
 
 class User(SimpleModel):
 
-    table = ['username', 'full_name', 'email', 'password', 'website']
+    table = ['username', 'full_name', 'email', 'password', 'website', 'admin']
 
     all = Function("get_all_users")
     get = Function("get_user", ['username'])
     get_page = Function("get_user_page", ['page'])
     delete = Function ("delete_user", ['username'])
-    create = Function("modify_user", ['username', 'full_name', 'email',
-        'password', 'password_again', 'website'])
-    update = Function("modify_user". ['username', 'full_name', 'email',
+    create = Function("create_user", ['username', 'full_name', 'email',
+        'password', 'password_again', 'website', 'admin'])
+    update = Function("update_user". ['username', 'full_name', 'email',
         'password', 'password_again', 'website'])
     get_permissions = Function("get_user_permissions", ['username'])
 
