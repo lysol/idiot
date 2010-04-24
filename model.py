@@ -32,10 +32,11 @@ class Issue(SimpleModel):
     
     all = Function("get_all_issues")
     get = Function("get_issue", ['seq'])
-    get_page = Function ("get_issue_page", ['project', 'page'])
+    get_page = Function("get_issue_page", ['project', 'page'])
     delete = Function("delete_issue", ['seq'])
     create = Function("create_issue", ['project', 'summary', 'description'])
     update = Function("update_issue", ['seq', 'summary', 'description'])
+    get_threads = Function("get_issue_threads", ['seq'])
 
 
 class User(SimpleModel):
@@ -65,3 +66,14 @@ class Permission(SimpleModel):
     update = Function("modify_permission", ['project', 'username',
         'post_issues', 'post_comments'])
 
+
+class Comment(SimpleModel):
+    
+    table = ['seq', 'author', 'comment', 'timestam']
+
+    all = Function("get_all_comments")
+    get = Function("get_comment", ['seq'])
+    get_thread = Function("get_thread", ['seq'])
+    create = Function("create_thread", ['project', 'author', 'comment'])
+    update = Function("modify_comment", ['seq', 'comment'])
+    reply = Function("reply_comment", ['seq', 'author', 'comment'])

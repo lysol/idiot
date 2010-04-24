@@ -1,5 +1,6 @@
 import web
 import model
+import controller
 
 urls = (
     '/', 'Browse',
@@ -7,11 +8,12 @@ urls = (
     '/ticket/(.*)', 'Issue',
     '/project/(.*)', 'Project',
     '/user/(.*)', 'User',
+    '/admin/', 'Admin',
 )
 
 class Browse:
 
-def GET(self, page):
+    def GET(self, page):
         pass
 
 
@@ -30,4 +32,10 @@ class Project:
 class User:
     
     def GET(self, user_id):
+        pass
+
+
+class Admin:
+
+    def GET(self):
         pass
