@@ -2,29 +2,25 @@ import web
 
 from simpycity.core import Function, Raw
 from simpycity.model import Construct, SimpleModel
-from simpycity import config
-
-config.host = 'localhost'
-config.port = 5432
-config.user = 'idgit'
-config.password = 'idgit'
-config.database = 'idgit'
-
 
 
 class Project(SimpleModel):
 
     table = ['name', 'description', 'owner']
     
-    all = Function("get_projects")
+    all = Function("get_projects", ['public'])
     get = Function("get_project", ['name'])
     delete = Function("delete_project", ['name'])
     get_all_issues = Function("get_project_issues", ['name'])
     get_issue_page = Function("get_project_issue_page", 
         ['name', 'page', 'per_page'])
+    get_user_project_page = \
+        Function("get_user_project_page", ['page', 'per_page', 'username'])
+    get_public_project_page = \
+        Function("get_public_project_page", ['page', 'per_page'])        
     get_max_issue_page = Raw("SELECT count(*) FROM issue WHERE project = %s", ["project"])
-    create = Function("create_project", ['name', 'description', 'owner'])
-    update = Function("modify_project", ['name', 'description'])
+    create = Function("create_project", ['name', 'description', 'owner', 'public'])
+    update = Function("modify_project", ['name', 'description', 'public'])
     get_permissions = Function("get_project_permissions", ['project'])
 
 
@@ -34,7 +30,7 @@ class Issue(SimpleModel):
     
     all = Function("get_all_issues")
     get = Function("get_issue", ['seq'])
-    get_page = Function("get_issue_page", ['project', 'page'])
+    #get_page = Function("get_issue_page", ['project', 'page'])
     delete = Function("delete_issue", ['seq'])
     create = Function("create_issue", ['project', 'summary', 'description', 'author'])
     update = Function("modify_issue", ['seq', 'summary', 'description'])
@@ -51,7 +47,7 @@ class User(SimpleModel):
     delete = Function ("delete_user", ['username'])
     create = Function("create_user", ['username', 'full_name', 'email',
         'password', 'password_again', 'website', 'admin'])
-    update = Function("modify_user". ['username', 'full_name', 'email',
+    update = Function("modify_user", ['username', 'full_name', 'email',
         'password', 'password_again', 'website'])
     get_permissions = Function("get_user_permissions", ['username'])
 
