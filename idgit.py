@@ -3,6 +3,7 @@ from web.contrib.template import render_jinja
 from model import *
 import controller
 
+
 urls = (
     '/', 'Browse',
     '/page/(.*)', 'Browse',
@@ -18,12 +19,6 @@ render = render_jinja('templates', encoding = 'utf-8')
 
 PER_PAGE = 20
 
-def logged():
-    if session.logged_in:
-        return True
-    else:
-        return False
-
 
 class Main:
     def GET(self):
@@ -31,26 +26,29 @@ class Main:
 
 class Browse:
     def GET(self, page):
-        # do something with a controller here
+        kwargs = controller.browse(session, page)
+        return render.browse(kwargs)
 
 class Issue:
     def GET(self, issue_id):
-        pass
-
+        kwargs = controller.issue(session, issue_id)
+        return render.issue(kwargs)
 
 class Project:
     def GET(self, project_id):
-        pass
-
+        kwargs = controller.project(session, project_id)
+        return render.project(kwargs)
 
 class User:
     def GET(self, user_id):
-        pass
-
+        kwargs = controller.user(session, user_id)
+        return render.user(kwargs)
 
 class Admin:
     def GET(self):
-        pass
+        kwargs = controller.admin(session)
+        return render.admin(kwargs)
+
 
 if __name__ == "__main__":
     app.run()

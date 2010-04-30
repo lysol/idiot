@@ -7,8 +7,15 @@ config.password = 'idgit'
 config.database = 'idgit'
 
 
-def main_page(session, page):
+def logged():
+    if session.logged_in:
+        return True
+    else:
+        return False
+
+def browser(session, page):
     if logged():
         results = Project.get_public_project_page(page, PER_PAGE, session.username)
     else:
         results = Project.get_user_project_page(page, PER_PAGE, session.username)
+    return {'results': results}
