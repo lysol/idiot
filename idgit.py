@@ -26,28 +26,23 @@ class Main:
 
 class Browse:
     def GET(self, page):
-        kwargs = controller.browse(session, page)
-        return render.browse(kwargs)
+        return controller.browse(session, render, page)
 
 class Issue:
     def GET(self, issue_id):
-        kwargs = controller.issue(session, issue_id)
-        return render.issue(kwargs)
+        return controller.issue(session, render, issue_id)
 
 class Project:
     def GET(self, project_id):
-        kwargs = controller.project(session, project_id)
-        return render.project(kwargs)
+        return controller.project(session, render, project_id)
 
 class User:
-    def GET(self, user_id):
-        kwargs = controller.user(session, user_id)
-        return render.user(kwargs)
+    def GET(self, username):
+        return controller.user(session, render, username)
 
 class Admin:
     def GET(self):
-        kwargs = controller.admin(session)
-        return render.admin(kwargs)
+        return controller.admin(session, render)
 
 
 if __name__ == "__main__":
