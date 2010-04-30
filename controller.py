@@ -1,11 +1,17 @@
+from ConfigParser import ConfigParser
 from simpycity import config
 
 config.host = 'localhost'
 config.port = 5432
-config.user = 'idgit'
-config.password = 'idgit'
-config.database = 'idgit'
+config.user = 'idiot'
+config.password = 'idiot'
+config.database = 'idiot'
 
+
+def read_config():
+    config = ConfigParser()
+    config.readfp(open('settings.conf'))
+    return dict(config.items('idiot'))
 
 def logged():
     if session.logged_in:
@@ -13,12 +19,15 @@ def logged():
     else:
         return False
 
-def browser(session, render, page):
+def browse(session, render, page):
+    config = read_config()
+
     if logged():
         results = Project.get_public_project_page(page, PER_PAGE, session.username)
     else:
         results = Project.get_user_project_page(page, PER_PAGE, session.username)
-    return {'results': results}
+    config.update(results)
+    return render.browse(config)
 
 def issue(session, render, issue_id):
     # TODO
@@ -34,5 +43,9 @@ def project(session, render, project_name):
 
 def user(session, render, username):
     # TODO
-    # Display a use profile.
+    # Display a user profile.
     pass
+
+def admin(session, render):
+    # TODO
+    # Admin panel
