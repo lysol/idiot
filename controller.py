@@ -22,6 +22,9 @@ class Controller():
         in_config.readfp(open('settings.conf'))
         out_config = dict([('idiot_' + x[0], x[1]) for x in \
             in_config.items('idiot')])
+        if self.logged():
+            out_config['logged'] = True
+            out_config['username'] = self.session.username
         return out_config
 
     def logged(self):
@@ -49,7 +52,7 @@ class Controller():
     def project(self, project_name):
         if (not self.logged() and \
             Project.is_public(project_name).fetchall()[0][0] is True) or \
-            (logged(self.session) and \
+            (self.logged() and \
             Project.has_access(project_name, self.session.username) is True):
             result = Project.get(project_name)
             self.config['project'] = result.fetchall()[0]

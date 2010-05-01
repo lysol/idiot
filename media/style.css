@@ -1,0 +1,38 @@
+body {
+		padding: 3em;
+		padding-top: 1em;
+		font-size: 16px;
+		font-family: helvetica, verdana, arial, sans-serif;
+		background-color: #DFDFDF;
+}
+
+a, a:active, a:visited {
+		color: #FF0000;
+		text-decoration: none;
+		font-weight: bold;
+		text-shadow: 1px 1px 1px #FFFFFF;
+}
+
+a:hover, a:focus {
+		color: #CC0000;
+		text-shadow: 0px 0px 10px #EEEEEE;
+}
+
+p#footer {
+		font-size: 80%;
+}
+
+h1 {
+		color: #FF0000;
+		font-size: 300%;
+}
+
+ul#project_list {
+		list-style: none;
+		padding: 0;
+}
+
+ul#project_list li {
+		margin: 0;
+		padding-left: 0;
+}

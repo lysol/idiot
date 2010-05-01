@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import web
 from web.contrib.template import render_jinja
 from controller import Controller
@@ -13,6 +14,8 @@ urls = (
     '/user/(\w+)/', 'User',
     '/admin/', 'Admin',
 )
+
+web.config.debug = True
 
 app = web.application(urls, globals())
 session = web.session.Session(app, web.session.DiskStore('sessions'),
