@@ -5,8 +5,11 @@ import controller
 
 urls = (
     '/', 'Main',
+    '/login/', 'Login',
+    '/logout/', 'Logout',
     '/page/(\d+)/', 'Browse',
     '/project/(\w+)/', 'Project',
+    '/project/(]w+)/issues/', 'ProjectIssues',
     '/project/(\w+)/issue/(\d+)/', 'Issue',
     '/user/(\w+)/', 'User',
     '/admin/', 'Admin',
@@ -42,6 +45,20 @@ class Admin:
     def GET(self):
         return controller.admin(session, render)
 
+class Login:
+    def POST(self, username, password):
+        if session = controller.login(session, username, password):
+            # Login succeeded.
+            return web.seeother('/')
+        else:
+            # Login failed
+            # TODO
+            pass
+
+class Logout:
+    def POST(self):
+        controller.logout(session)
+        return web.seeother('/')
 
 if __name__ == "__main__":
     app.run()

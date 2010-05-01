@@ -1,36 +1,43 @@
+import hashlib
 from ConfigParser import ConfigParser
 from simpycity import config
 from model import *
 
-config.host = 'localhost'
-config.port = 5432
-config.user = 'idiot'
-config.password = 'idiot'
-config.database = 'idiot'
+in_config = ConfigParser()
+in_config.readfp(open('settings.conf'))
+items = dict(in_config.items('database'))
+
+config.host = items['host']
+config.port = items['port']
+config.user = items['user']
+config.password = items['password']
+config.database = items['database']
 
 PER_PAGE = 20
 
 def read_config():
-    config = ConfigParser()
-    config.readfp(open('settings.conf'))
-    out_config = dict([('idiot_' + x[0], x[1]) for x in config.items('idiot')])
+    in_config = ConfigParser()
+    in_config.readfp(open('settings.conf'))
+    out_config = dict([('idiot_' + x[0], x[1]) for x in \
+        in_config.items('idiot')])
     return out_config
 
 def logged(session):
-    if hasattr(session,'logged_in') and session.logged_in:
+    if hasattr(session,'logged_in') and session.logged_in
+        and User.check_login(session.username, session.password):
         return True
     else:
         return False
 
 def browse(session, render, page):
-    config = read_config()
+    kwargs = read_config()
 
     if not logged(session):
         results = Project.get_public_project_page(page, PER_PAGE)
     else:
         results = Project.get_user_project_page(page, PER_PAGE, session.username)
-    config['projects'] = results
-    return render.browse(config)
+    kwargs['projects'] = results
+    return render.browse(kwargs)
 
 def issue(session, render, issue_id):
     # TODO
@@ -39,18 +46,33 @@ def issue(session, render, issue_id):
     pass
 
 def project(session, render, project_name):
-    config = read_config()
+    kwargs = read_config()
     if (not logged(session) and \
         Project.is_public(project_name).fetchall()[0][0] is True) or \
         (logged(session) and \
         Project.has_access(project_name, session.username) is True):
         result = Project.get(project_name)
-        config['project'] = result.fetchall()[0]
+        kwargs['project'] = result.fetchall()[0]
         result = Project.get_issue_page(project_name, 1, PER_PAGE)
-        config['issues'] = result
+        kwargs['issues'] = result
     else:
-        config['error'] = "You do not have permission to view this project."
-    return render.project(config)
+        kwargs['error'] = "You do not have permission to view this project."
+    return render.project(kwargs)
+
+def project_issues(session, render, project_name, page):
+    kwargs = read_config()
+    if (not logged(session) and \
+        Project.is_public(project_name).fetchall()[0][0] is True) or \
+        (logged(session) and \
+        Project.has_access(project_name, session.username) is True):
+        result = Project.get(project_name)
+        kwargs['project'] = result.fetchall()[0]
+        result = Project.get_issue_page(project_name, page, PER_PAGE)
+        kwargs['issues'] = result
+    else:
+        kwargs['error'] = "You do not have permission to view this project."
+    return render.project_issues(kwargs)
+
 
 def user(session, render, username):
     # TODO
@@ -61,3 +83,14 @@ def admin(session, render):
     # TODO
     # Admin panel
     pass
+
+
+
+def login(session, username, password):
+    if User.login(username, password):
+        session.logged_in = True
+        session.username = username
+        session.password = hashlib.md5(password).hexdigest()
+        return True
+    else:
+        return False

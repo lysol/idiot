@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+{% if not error %}
+<h2>{{project.name}}</h2>
+<h3>Owner: {{project.owner}}</h3>
+
+<p>
+  <a href="{{idiot_app_path}}project/{{project.name}}/issues/">View Project Issues</a>
+</p>
+{% else %}
+
+<h2>Error</h2>
+<p>{{error}}</p>
+{% endif %}
+{% endblock %}

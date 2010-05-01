@@ -51,6 +51,8 @@ class User(SimpleModel):
         'password', 'password_again', 'website', 'admin'])
     update = Function("modify_user", ['username', 'full_name', 'email',
         'password', 'password_again', 'website'])
+    login = Function("user_login", ['login_username', 'login_password'])
+    check_login = Function("user_verify", ['login_username', 'md5_password'])
     get_permissions = Function("get_user_permissions", ['username'])
 
 
