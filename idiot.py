@@ -6,8 +6,8 @@ import controller
 urls = (
     '/', 'Main',
     '/page/(\d+)/', 'Browse',
-    '/ticket/(\d+)/', 'Issue',
     '/project/(\w+)/', 'Project',
+    '/project/(\w+)/issue/(\d+)/', 'Issue',
     '/user/(\w+)/', 'User',
     '/admin/', 'Admin',
 )
@@ -27,12 +27,12 @@ class Browse:
         return controller.browse(session, render, page)
 
 class Issue:
-    def GET(self, issue_id):
-        return controller.issue(session, render, issue_id)
+    def GET(self, project_name, issue_id):
+        return controller.issue(session, render, project_name, issue_id)
 
 class Project:
-    def GET(self, project_id):
-        return controller.project(session, render, project_id)
+    def GET(self, project_name):
+        return controller.project(session, render, project_name)
 
 class User:
     def GET(self, username):

@@ -40,8 +40,17 @@ def issue(session, render, issue_id):
 
 def project(session, render, project_name):
     config = read_config()
-    # TODO finish
-    pass
+    if (not logged(session) and \
+        Project.is_public(project_name).fetchall()[0][0] is True) or \
+        (logged(session) and \
+        Project.has_access(project_name, session.username) is True):
+        result = Project.get(project_name)
+        config['project'] = result.fetchall()[0]
+        result = Project.get_issue_page(project_name, 1, PER_PAGE)
+        config['issues'] = result
+    else:
+        config['error'] = "You do not have permission to view this project."
+    return render.project(config)
 
 def user(session, render, username):
     # TODO

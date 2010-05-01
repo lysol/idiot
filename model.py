@@ -9,7 +9,9 @@ class Project(SimpleModel):
     table = ['name', 'description', 'owner']
     
     all = Function("get_projects", ['public_only'])
-    get = Function("get_project", ['name'])
+    get = Function("get_project", ['project_name'])
+    has_access = Function("has_project_access", ['project_name', 'username'])
+    is_public = Function("project_is_public", ['project_name'])
     delete = Function("delete_project", ['name'])
     get_all_issues = Function("get_project_issues", ['name'])
     get_issue_page = Function("get_project_issue_page", 
