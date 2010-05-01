@@ -1,7 +1,6 @@
 import web
 from web.contrib.template import render_jinja
-import controller
-
+from controller import Controller
 
 urls = (
     '/', 'Main',
@@ -19,7 +18,7 @@ app = web.application(urls, globals())
 session = web.session.Session(app, web.session.DiskStore('sessions'),
     initializer={'nothing': None})
 render = render_jinja('templates', encoding = 'utf-8')
-
+controller = Controller(session, render)
 
 class Main:
     def GET(self):
@@ -27,27 +26,28 @@ class Main:
 
 class Browse:
     def GET(self, page):
-        return controller.browse(session, render, page)
+        return controller.browse(page)
 
 class Issue:
     def GET(self, project_name, issue_id):
-        return controller.issue(session, render, project_name, issue_id)
+        return controller.issue(project_name, issue_id)
 
 class Project:
     def GET(self, project_name):
-        return controller.project(session, render, project_name)
+        return controller.project(project_name)
 
 class User:
     def GET(self, username):
-        return controller.user(session, render, username)
+        return controller.user(username)
 
 class Admin:
     def GET(self):
-        return controller.admin(session, render)
+        return controller.admin()
 
 class Login:
     def POST(self, username, password):
-        if session = controller.login(session, username, password):
+        session = controller.login(username, password)
+        if controller.logged():
             # Login succeeded.
             return web.seeother('/')
         else:
