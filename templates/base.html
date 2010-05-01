@@ -9,17 +9,20 @@
 
 		<link rel="stylesheet" type="text/css" href="{{idiot_media_path}}{{idiot_stylesheet}}" />
   </head>
-
-    <h1><a href="{{idiot_app_path}}">{{ idiot_title }}</a></h1>
-
 	<body>
+    <div id="header">
+    <h1><a href="{{idiot_app_path}}">{{ idiot_title }}</a></h1>
+    </div>
+    <div id="content">
 	{% block content %}
     {% endblock %}
+    </div>
 	{% block footer %}
-	<p id="footer">
-	  Powered by <a href="http://github.com/lysol/idiot">idiot</a><br />
+	<div id="footer">
+	<small>Powered by <a href="http://github.com/lysol/idiot">idiot</a><br />
 		&copy; 2010 <a href="http://brainindustries.com">Brain Industries</a>
-	</p>
+    </small>
+	</div>
 	{% endblock %}
 	</body>
 </html>

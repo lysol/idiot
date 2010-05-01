@@ -1,13 +1,70 @@
 import web
+from ConfigParser import ConfigParser
 
-from simpycity.core import Function, Raw
-from simpycity.model import Construct, SimpleModel
+in_config = ConfigParser()
+in_config.readfp(open('settings.conf'))
+items = dict(in_config.items('database'))
+
+host = items['host']
+port = items['port']
+user = items['user']
+password = items['password']
+database = items['database']
+dbtype = items['type']
+
+db = web.database(dbn=dbtype, port=port, db=database,
+    user=user, pw=password, host=host)
 
 
-class Project(SimpleModel):
+class Model:
+    """Attempt to provide a rational interface to database functions."""
 
-    table = ['name', 'description', 'owner']
+    def _exec_function(self, method_name, argument_list, returns_set,
+        schema_name='public'):
+        """Execute a programmatically defined method."""
+
+        if returns_set:
+            query = """
+                SELECT * FROM "%s"."%s"(%s);
+            """
+        else:
+            query = """
+                SELECT "%s"."%s"(%s);
+            """
+        args = ', '.join(['"%s"' % arg for arg in argument_list])
+        return db.query(query % (schema_name, method_name, args))
+
+    def _add_method(self, method_name, argument_list, returns_set):
+        """Add a dummy method that calls _exec_function for a function."""
+        setattr(self, lambda method_name, argument_list, returns_set:
+            self._exec_function(method_name, argument_list, returns_set))
+
+    def __init__(self):
+        function_methods = filter(lambda x: hasattr(x, 'function_name'),
+            dir(self))
+        for function_method in function_methods:
+            method_name = getattr(function_method, 'function_name')
+            arguments = getattr(function_method, 'argument_list')
+            returns_set = getattr(function_method, 'returns_set')
+            self._add_method(function_name, arguments, returns_set)
+        
+
+class Function:
     
+    def __init__(self, function_name, argument_list=[], returns_set=False):
+        self.function_name = function_name
+        self.argument_list = argument_list
+        self.returns_set = returns_set
+        self.__modeltype__ = 'Function'
+
+class Raw:
+    
+    def __init__(self, query, argument_list=[], returns_set=True):
+        self.__modeltype__ = 'Raw'
+        # TODO Add other attribute defs
+
+class Project:
+
     all = Function("get_projects", ['public_only'])
     get = Function("get_project", ['project_name'])
     has_access = Function("has_project_access", ['project_name', 'username'])
@@ -26,10 +83,8 @@ class Project(SimpleModel):
     get_permissions = Function("get_project_permissions", ['project'])
 
 
-class Issue(SimpleModel):
+class Issue:
 
-    table = ['seq', 'project', 'summary', 'description', 'author']
-    
     all = Function("get_all_issues")
     get = Function("get_issue", ['seq'])
     #get_page = Function("get_issue_page", ['project', 'page'])
@@ -39,9 +94,7 @@ class Issue(SimpleModel):
     get_threads = Function("get_issue_threads", ['seq'])
 
 
-class User(SimpleModel):
-
-    table = ['username', 'full_name', 'email', 'password', 'website', 'admin']
+class User:
 
     all = Function("get_all_users")
     get = Function("get_user", ['username'])
@@ -56,10 +109,8 @@ class User(SimpleModel):
     get_permissions = Function("get_user_permissions", ['username'])
 
 
-class Permission(SimpleModel):
+class Permission:
     
-    table = ['seq', 'project', 'username', 'post_issues', 'post_comments']
-
     all = Function("get_all_permissions")
     get = Function("get_permission", ['seq'])
     delete = Function("delete_permission", ['seq'])
@@ -69,10 +120,8 @@ class Permission(SimpleModel):
         'post_issues', 'post_comments'])
 
 
-class Comment(SimpleModel):
+class Comment:
     
-    table = ['seq', 'author', 'comment', 'timestamp', 'project', 'parent_seq']
-
     all = Function("get_all_comments")
     get = Function("get_comment", ['seq'])
     get_thread = Function("get_thread", ['seq'])
