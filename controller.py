@@ -1,5 +1,6 @@
 from ConfigParser import ConfigParser
 from simpycity import config
+from model import *
 
 config.host = 'localhost'
 config.port = 5432
@@ -7,14 +8,16 @@ config.user = 'idiot'
 config.password = 'idiot'
 config.database = 'idiot'
 
+PER_PAGE = 20
 
 def read_config():
     config = ConfigParser()
     config.readfp(open('settings.conf'))
-    return dict(config.items('idiot'))
+    out_config = dict([('idiot_' + x[0], x[1]) for x in config.items('idiot')])
+    return out_config
 
-def logged():
-    if session.logged_in:
+def logged(session):
+    if hasattr(session,'logged_in') and session.logged_in:
         return True
     else:
         return False
@@ -22,11 +25,11 @@ def logged():
 def browse(session, render, page):
     config = read_config()
 
-    if logged():
-        results = Project.get_public_project_page(page, PER_PAGE, session.username)
+    if not logged(session):
+        results = Project.get_public_project_page(page, PER_PAGE)
     else:
         results = Project.get_user_project_page(page, PER_PAGE, session.username)
-    config.update(results)
+    config['projects'] = results
     return render.browse(config)
 
 def issue(session, render, issue_id):
@@ -36,9 +39,8 @@ def issue(session, render, issue_id):
     pass
 
 def project(session, render, project_name):
-    # TODO
-    # Check if user is attached to the project or an admin.
-    # If so, display it, or kick back to the main apge.
+    config = read_config()
+    # TODO finish
     pass
 
 def user(session, render, username):
@@ -49,3 +51,4 @@ def user(session, render, username):
 def admin(session, render):
     # TODO
     # Admin panel
+    pass

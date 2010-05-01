@@ -8,7 +8,7 @@ class Project(SimpleModel):
 
     table = ['name', 'description', 'owner']
     
-    all = Function("get_projects", ['public'])
+    all = Function("get_projects", ['public_only'])
     get = Function("get_project", ['name'])
     delete = Function("delete_project", ['name'])
     get_all_issues = Function("get_project_issues", ['name'])

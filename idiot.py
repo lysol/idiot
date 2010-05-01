@@ -1,28 +1,26 @@
 import web
 from web.contrib.template import render_jinja
-from model import *
 import controller
 
 
 urls = (
-    '/', 'Browse',
-    '/page/(.*)', 'Browse',
-    '/ticket/(.*)', 'Issue',
-    '/project/(.*)', 'Project',
-    '/user/(.*)', 'User',
+    '/', 'Main',
+    '/page/(\d+)/', 'Browse',
+    '/ticket/(\d+)/', 'Issue',
+    '/project/(\w+)/', 'Project',
+    '/user/(\w+)/', 'User',
     '/admin/', 'Admin',
 )
 
 app = web.application(urls, globals())
-session = web.session.Session(app, web.session.DiskStore('sessions'))
+session = web.session.Session(app, web.session.DiskStore('sessions'),
+    initializer={'nothing': None})
 render = render_jinja('templates', encoding = 'utf-8')
-
-PER_PAGE = 20
 
 
 class Main:
     def GET(self):
-        return Browse.GET(1)
+        return web.seeother('/page/1/')
 
 class Browse:
     def GET(self, page):
