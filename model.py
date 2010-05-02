@@ -16,52 +16,43 @@ db = web.database(dbn=dbtype, port=port, db=database,
     user=user, pw=password, host=host)
 
 
-class Model:
-    """Attempt to provide a rational interface to database functions."""
-
-    def _exec_function(self, method_name, argument_list, returns_set,
-        schema_name='public'):
-        """Execute a programmatically defined method."""
-
-        if returns_set:
-            query = """
-                SELECT * FROM "%s"."%s"(%s);
-            """
-        else:
-            query = """
-                SELECT "%s"."%s"(%s);
-            """
-        args = ', '.join(['"%s"' % arg for arg in argument_list])
-        return db.query(query % (schema_name, method_name, args))
-
-    def _add_method(self, method_name, argument_list, returns_set):
-        """Add a dummy method that calls _exec_function for a function."""
-        setattr(self, lambda method_name, argument_list, returns_set:
-            self._exec_function(method_name, argument_list, returns_set))
-
-    def __init__(self):
-        function_methods = filter(lambda x: hasattr(x, 'function_name'),
-            dir(self))
-        for function_method in function_methods:
-            method_name = getattr(function_method, 'function_name')
-            arguments = getattr(function_method, 'argument_list')
-            returns_set = getattr(function_method, 'returns_set')
-            self._add_method(function_name, arguments, returns_set)
-        
-
 class Function:
-    
-    def __init__(self, function_name, argument_list=[], returns_set=False):
+
+    def __call__(self, *arguments):
+        """Execute a programmatically defined method using a tuple list of
+        argument names and values."""
+
+        query = """
+            SELECT * FROM "%s"."%s"(%s);
+        """
+        args = ', '.join(["$%s" % arg for arg in self.arguments])
+        query = query % (self.schema, self.function_name, args)
+        arg_dict = {}
+        for i in range(len(self.arguments)):
+            arg_dict[self.arguments[i]] = arguments[i]
+        return db.query(query, vars=arg_dict)
+
+    def __init__(self, function_name, arguments=[], schema='public'):
         self.function_name = function_name
-        self.argument_list = argument_list
-        self.returns_set = returns_set
-        self.__modeltype__ = 'Function'
+        self.arguments = arguments
+        self.schema = schema
+
 
 class Raw:
-    
-    def __init__(self, query, argument_list=[], returns_set=True):
-        self.__modeltype__ = 'Raw'
-        # TODO Add other attribute defs
+
+    def __call__(self, *arguments):
+        """Execute a query with arguments.  Must follow web.py standard
+        queries."""
+
+        arg_dict = {}
+        for i in range(len(self.arguments)):
+            arg_dict[self.arguments[i]] = arguments[i]
+        return db.query(self.query, vars=arg_dict)
+
+    def __init__(self, query, arguments=[]):
+        self.query = query
+        self.arguments = arguments
+
 
 class Project:
 
@@ -82,6 +73,8 @@ class Project:
     update = Function("modify_project", ['name', 'description', 'public'])
     get_permissions = Function("get_project_permissions", ['project'])
 
+    def __init__(self):
+        Model.__init__(self)
 
 class Issue:
 

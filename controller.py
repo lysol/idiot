@@ -1,17 +1,6 @@
 import hashlib
 from ConfigParser import ConfigParser
-from simpycity import config
 from model import *
-
-in_config = ConfigParser()
-in_config.readfp(open('settings.conf'))
-items = dict(in_config.items('database'))
-
-config.host = items['host']
-config.port = items['port']
-config.user = items['user']
-config.password = items['password']
-config.database = items['database']
 
 PER_PAGE = 20
 
@@ -51,11 +40,11 @@ class Controller():
 
     def project(self, project_name):
         if (not self.logged() and \
-            Project.is_public(project_name).fetchall()[0][0] is True) or \
+            Project.is_public(project_name)[0].project_is_public is True) or \
             (self.logged() and \
             Project.has_access(project_name, self.session.username) is True):
             result = Project.get(project_name)
-            self.config['project'] = result.fetchall()[0]
+            self.config['project'] = result[0]
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
             self.config['issues'] = result
         else:
@@ -64,11 +53,11 @@ class Controller():
 
     def project_issues(self, project_name, page):
         if (not self.logged() and \
-            Project.is_public(project_name).fetchall()[0][0] is True) or \
+            Project.is_public(project_name)[0].project_is_public is True) or \
             (logged(self.session) and \
             Project.has_access(project_name, self.session.username) is True):
             result = Project.get(project_name)
-            self.config['project'] = result.fetchall()[0]
+            self.config['project'] = result[0]
             result = Project.get_issue_page(project_name, page, PER_PAGE)
             self.config['issues'] = result
         else:
