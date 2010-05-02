@@ -41,6 +41,16 @@ ul#project_list li {
 		padding-left: 0;
 }
 
+ul#issue_list {
+		list-style: none;
+		padding: 0;
+}
+
+ul#issue_list li {
+		margin: 0;
+		padding-left: 0;
+}
+
 div#content {
 		padding: 3em;
 		padding-top: 1em;

@@ -9,10 +9,10 @@ urls = (
     '/logout/', 'Logout',
     '/page/(\d+)/', 'Browse',
     '/project/(\w+)/', 'Project',
-    '/project/(]w+)/issues/', 'ProjectIssues',
-    '/project/(\w+)/issue/(\d+)/', 'Issue',
+    '/project/(\w+)/issues/', 'ProjectIssues',
     '/user/(\w+)/', 'User',
     '/admin/', 'Admin',
+	'/issue/(\d+)/', 'Issue'
 )
 
 web.config.debug = True
@@ -32,12 +32,16 @@ class Browse:
         return controller.browse(page)
 
 class Issue:
-    def GET(self, project_name, issue_id):
-        return controller.issue(project_name, issue_id)
+    def GET(self, issue_id):
+        return controller.issue(issue_id)
 
 class Project:
     def GET(self, project_name):
         return controller.project(project_name)
+
+class ProjectIssues:
+	def GET(self, project_name):
+		return controller.project_issues(project_name, 1)
 
 class User:
     def GET(self, username):

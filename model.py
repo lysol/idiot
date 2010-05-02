@@ -79,7 +79,8 @@ class Project:
 class Issue:
 
     all = Function("get_all_issues")
-    get = Function("get_issue", ['seq'])
+    #get = Function("get_issue", ['seq'])
+    get = Raw("SELECT * FROM issue WHERE seq = $seq", ['seq'])
     #get_page = Function("get_issue_page", ['project', 'page'])
     delete = Function("delete_issue", ['seq'])
     create = Function("create_issue", ['project', 'summary', 'description', 'author'])

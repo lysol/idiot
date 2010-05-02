@@ -6,6 +6,17 @@ PER_PAGE = 20
 
 class Controller():
 
+    def _project_allowed(self, project_name):
+        """Private method for determining if a project is viewable by
+        the user."""
+        if (not self.logged() and \
+            Project.is_public(project_name)[0].project_is_public is True) or \
+            (self.logged() and \
+            Project.has_access(project_name, self.session.username) is True):
+            return True
+        else:
+            return False
+
     def read_config(self):
         in_config = ConfigParser()
         in_config.readfp(open('settings.conf'))
@@ -33,16 +44,20 @@ class Controller():
         return self.render.browse(self.config)
 
     def issue(self, issue_id):
-        # TODO
-        # Check if issue is part of a project user is attached to.
-        # If so, display it, otherwise, deny.
-        pass
+        issue = Issue.get(issue_id)[0]
+        if self._project_allowed(issue.project):
+            self.config['issue'] = issue
+            self.config['project'] = Project.get(issue.project)[0]
+            self.config['author'] = User.get(issue.author)[0]
+        else:
+            self.config['error'] = "This issue is attached to a project" + \
+                " you do not have permission to access."
+        return self.render.issue(self.config)
+
+
 
     def project(self, project_name):
-        if (not self.logged() and \
-            Project.is_public(project_name)[0].project_is_public is True) or \
-            (self.logged() and \
-            Project.has_access(project_name, self.session.username) is True):
+        if self._project_allowed(project_name):
             result = Project.get(project_name)
             self.config['project'] = result[0]
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
@@ -52,10 +67,7 @@ class Controller():
         return self.render.project(self.config)
 
     def project_issues(self, project_name, page):
-        if (not self.logged() and \
-            Project.is_public(project_name)[0].project_is_public is True) or \
-            (logged(self.session) and \
-            Project.has_access(project_name, self.session.username) is True):
+        if self._project_allowed(project_name):
             result = Project.get(project_name)
             self.config['project'] = result[0]
             result = Project.get_issue_page(project_name, page, PER_PAGE)
