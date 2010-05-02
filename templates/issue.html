@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if not error %}
+<h2>Issue {{issue.seq}}: {{issue.summary}}</h2>
+<h3>Owner: {{author.full_name}}</h3>
+
+<p>{{issue.description}}</p>
+{% else %}
+
+<h2>Error</h2>
+<p>{{error}}</p>
+{% endif %}
+{% endblock %}
