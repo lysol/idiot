@@ -1,71 +1,149 @@
 #!/usr/bin/env python
+from ConfigParser import ConfigParser
+import hashlib
 import web
 from web.contrib.template import render_jinja
-from controller import Controller
+from model import *
+
 
 urls = (
-    '/', 'Main',
-    '/login/', 'Login',
-    '/logout/', 'Logout',
-    '/page/(\d+)/', 'Browse',
-    '/project/(\w+)/', 'Project',
-    '/project/(\w+)/issues/', 'ProjectIssues',
-    '/user/(\w+)/', 'User',
-    '/admin/', 'Admin',
-	'/issue/(\d+)/', 'Issue'
+    '/?', 'IMain',
+    '/login/?', 'ILogin',
+    '/logout/?', 'ILogout',
+    '/page/(\d+)/?', 'IBrowse',
+    '/project/(\w+)/?', 'IProject',
+    '/project/(\w+)/issues/?', 'IProjectIssues',
+    '/user/(\w+)/?', 'IUser',
+    '/admin/?', 'IAdmin',
+	'/issue/(\d+)/?', 'IIssue'
 )
 
 web.config.debug = True
 
 app = web.application(urls, globals())
+
 session = web.session.Session(app, web.session.DiskStore('sessions'),
     initializer={'nothing': None})
 render = render_jinja('templates', encoding = 'utf-8')
-controller = Controller(session, render)
 
-class Main:
+PER_PAGE = 20
+
+class WebModule:
+
+    def logged(self):
+        if hasattr(session,'logged_in') and session.logged_in and \
+            User.check_login(session.username, session.password):
+            return True
+        else:
+            return False
+
+    def read_config(self):
+        in_config = ConfigParser()
+        in_config.readfp(open('settings.conf'))
+        out_config = dict([('idiot_' + x[0], x[1]) for x in \
+            in_config.items('idiot')])
+        if self.logged() is True:
+            out_config['logged'] = True
+            out_config['yourself'] = User.get(session.username)[0]
+        else:
+            out_config['logged'] = False
+            out_config['yourself'] = None
+        out_config['session'] = repr(session)
+        return out_config
+
+    def _project_allowed(self, project_name):
+        """Private method for determining if a project is viewable by
+        the user."""
+        if (not self.logged() and \
+            Project.is_public(project_name)[0].project_is_public is True) or \
+            (self.logged() and \
+            Project.has_access(project_name, session.username) is True):
+            return True
+        else:
+            return False
+
+    def __init__(self):
+        self.config = self.read_config()
+
+
+
+class IMain(WebModule):
     def GET(self):
         return web.seeother('/page/1/')
 
-class Browse:
-    def GET(self, page):
-        return controller.browse(page)
-
-class Issue:
-    def GET(self, issue_id):
-        return controller.issue(issue_id)
-
-class Project:
-    def GET(self, project_name):
-        return controller.project(project_name)
-
-class ProjectIssues:
-	def GET(self, project_name):
-		return controller.project_issues(project_name, 1)
-
-class User:
-    def GET(self, username):
-        return controller.user(username)
-
-class Admin:
-    def GET(self):
-        return controller.admin()
-
-class Login:
-    def POST(self, username, password):
-        session = controller.login(username, password)
-        if controller.logged():
-            # Login succeeded.
-            return web.seeother('/')
+class IBrowse(WebModule):
+    def GET(self, page=1):
+        if not self.logged():
+            results = Project().get_public_project_page(page, PER_PAGE)
         else:
-            # Login failed
-            # TODO
-            pass
+            results = Project().get_user_project_page(page, PER_PAGE,
+                session.username)
+        self.config['projects'] = results
+        return render.browse(self.config)
 
-class Logout:
+class IIssue(WebModule):
+    def GET(self, issue_id):
+        issue = Issue.get(issue_id)[0]
+        if self._project_allowed(issue.project):
+            self.config['issue'] = issue
+            self.config['project'] = Project.get(issue.project)[0]
+            self.config['author'] = User.get(issue.author)[0]
+        else:
+            self.config['error'] = "This issue is attached to a project" + \
+                " you do not have permission to access."
+        return render.issue(self.config)    
+
+class IProject(WebModule):
+    def GET(self, project_name):
+        if self._project_allowed(project_name):
+            result = Project.get(project_name)
+            self.config['project'] = result[0]
+            result = Project.get_issue_page(project_name, 1, PER_PAGE)
+            self.config['issues'] = result
+        else:
+            self.config['error'] = "You do not have permission to view this project."
+        return render.project(self.config)
+
+class IProjectIssues(WebModule):
+    def GET(self, project_name, page=1):
+        if self._project_allowed(project_name):
+            result = Project.get(project_name)
+            self.config['project'] = result[0]
+            result = Project.get_issue_page(project_name, page, PER_PAGE)
+            self.config['issues'] = result
+        else:
+            self.config['error'] = "You do not have permission to view this project."
+        return render.project_issues(self.config)
+
+class IUser(WebModule):
+    def GET(self, username):
+        # TODO
+        # Display a user profile.
+        pass
+
+class IAdmin(WebModule):
+    def GET(self):
+        # TODO
+        # Admin panel
+        pass
+
+class ILogin(WebModule):
     def POST(self):
-        controller.logout(session)
+        username, password = web.input().username, web.input().password 
+        if User.login(username, password)[0]['user_login'] is True:
+            session.logged_in = True
+            session.username = username
+            session.password = hashlib.md5(password).hexdigest()
+            return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
+        else:
+            self.config['error'] = 'Login failed.'
+            return render.error(self.config) 
+        
+class ILogout(WebModule):
+    def POST(self):
+        self.controller.logout(session)
         return web.seeother('/')
+
 
 if __name__ == "__main__":
     app.run()

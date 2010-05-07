@@ -73,8 +73,6 @@ class Project:
     update = Function("modify_project", ['name', 'description', 'public'])
     get_permissions = Function("get_project_permissions", ['project'])
 
-    def __init__(self):
-        Model.__init__(self)
 
 class Issue:
 

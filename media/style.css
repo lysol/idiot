@@ -25,6 +25,23 @@ div#header {
 		padding-top: 1em;
 		margin-top: 0;
 		padding-bottom: 1em;
+		position: relative;
+}
+
+div#user_info {
+		position: absolute;
+		top: 0em;
+		right: 0em;
+		width: 20em;
+		padding: 2em;
+		padding-top: 1em;
+		padding-bottom: 1em;
+		font-size: 80%;
+		background-color: #000000;
+		color: #FFFFFF;
+    -webkit-border-bottom-left-radius: 10px;
+    -moz-border-radius-bottomleft: 10px;
+    border-bottom-left-radius: 10px;
 }
 
 div#header a, div#header a:active, div#header a:visited {
