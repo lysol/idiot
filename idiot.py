@@ -60,10 +60,14 @@ class WebModule:
     def _project_allowed(self, project_name):
         """Private method for determining if a project is viewable by
         the user."""
-        if (not self.logged() and \
-            Project.is_public(project_name)[0].project_is_public is True) or \
-            (self.logged() and \
-            Project.has_access(project_name, session.username) is True):
+        if not self.logged() and \
+            Project.is_public(project_name)[0].project_is_public is True:
+            return True
+        elif self.logged() and \
+            Project.has_access(project_name, session.username) is True:
+            return True
+        elif session.has_key('username') and \
+            Project.owner(project_name)[0]['owner'] == session.username:
             return True
         else:
             return False
@@ -96,6 +100,7 @@ class IIssue(WebModule):
         else:
             self.config['error'] = "This issue is attached to a project" + \
                 " you do not have permission to access."
+            return render.error(self.config)
         return render.issue(self.config)    
 
 class IProject(WebModule):

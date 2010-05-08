@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
+{% block header %}
+Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
+Owner: {{project.owner}}
+{% endblock %}
 
 {% block content %}
 {% if not error %}
-<h2>{{project.name}}</h2>
-<h3>Owner: {{project.owner}}</h3>
-
 <p>
   <a href="{{idiot_app_path}}project/{{project.name}}/issues/">View Project Issues</a>
 </p>

@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 
 
+{% block header %}
+Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
+Owner: {{project.owner}}
+{% endblock %}
+
 {% block content %}
 {% if not error %}
-<h2>Recent issues for <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.name}}</a></h2>
+<h2>Recent issues</h2>
 
 <ul id="issue_list">
   {% for issue in issues %}

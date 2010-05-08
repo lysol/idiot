@@ -47,6 +47,8 @@ class Raw:
         arg_dict = {}
         for i in range(len(self.arguments)):
             arg_dict[self.arguments[i]] = arguments[i]
+        print "Query: %s" % repr(self.query)
+        print "Vars: %s" % repr(arg_dict)
         return db.query(self.query, vars=arg_dict)
 
     def __init__(self, query, arguments=[]):
@@ -68,8 +70,21 @@ class Project:
         Function("get_user_project_page", ['page', 'per_page', 'username'])
     get_public_project_page = \
         Function("get_public_project_page", ['page', 'per_page'])        
-    get_max_issue_page = Raw("SELECT count(*) FROM issue WHERE project = %s", ["project"])
-    create = Function("create_project", ['name', 'description', 'owner', 'public'])
+    get_max_issue_page = Function("get_project_max_issue_page",
+        ['project', 'per_page'])
+    #get_max_issue_page = Raw("""
+    #    SELECT CASE
+    #        WHEN count(*) % $per_page = 0
+    #        THEN count(*) % $per_page
+    #        ELSE (count(*) / $per_page) + 1
+    #    END AS max_page
+    #    FROM issue
+    #    WHERE project = $project
+    #    """, ['project', 'per_page'])
+    owner = Raw("SELECT owner FROM project WHERE name = $project",
+        ["project"])
+    create = Function("create_project", 
+        ['name', 'description', 'owner', 'public'])
     update = Function("modify_project", ['name', 'description', 'public'])
     get_permissions = Function("get_project_permissions", ['project'])
 
@@ -81,7 +96,8 @@ class Issue:
     get = Raw("SELECT * FROM issue WHERE seq = $seq", ['seq'])
     #get_page = Function("get_issue_page", ['project', 'page'])
     delete = Function("delete_issue", ['seq'])
-    create = Function("create_issue", ['project', 'summary', 'description', 'author'])
+    create = Function("create_issue",
+        ['project', 'summary', 'description', 'author'])
     update = Function("modify_issue", ['seq', 'summary', 'description'])
     get_threads = Function("get_issue_threads", ['seq'])
 

@@ -7,15 +7,11 @@
 
 		<title>{{ idiot_title }}{% block title_crumbs %}{% endblock %}</title>
 
-		<link rel="stylesheet" type="text/css" href="{{idiot_media_path}}{{idiot_stylesheet}}" />
-  </head>
+		<link rel="stylesheet" type="text/css" href="{{idiot_media_path}}css/{{idiot_stylesheet}}" />
+    <script type="text/javascript" src="{{idiot_media_path}}js/mootools.js"></script> 
+		<script type="text/javascript" src="{{idiot_media_path}}js/idiot.js"></script>
+	</head>
 	<body>
-    <div id="header">
-    <h1>
-    {% block header %}
-    <a href="{{idiot_app_path}}">{{ idiot_title }}</a>
-    {% endblock %}
-    </h1>
     {% block user_section %}
     <div id="user_info">
         {% if logged %}
@@ -29,6 +25,16 @@
 					{{ login_form }}
         {% endif %}
     </div>
+    {% endblock %}
+	
+    <div id="idiot_header">
+				<a href="{{idiot_app_path}}">
+            <img src="{{idiot_media_path}}images/idiot.png" alt="Idiot">
+        </a>
+		</div>
+    <div id="header">
+    {% block header %}
+		Project Tracker
     {% endblock %}
     </div>
     <div id="content">
