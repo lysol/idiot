@@ -18,12 +18,11 @@
     </h1>
     {% block user_section %}
     <div id="user_info">
-        <!-- Session: {{ session }} -->
         {% if logged %}
-          {% import 'user_info.html' as user_info %}
+          {% import 'user_info.html' as user_info with context %}
           {{ user_info }}
         {% else %}
-          {% import 'login_form.html' as login_form %}
+          {% import 'login_form.html' as login_form with context %}
           {% if login_error is defined %}
 					<div class="error">{{login_error}}</div>
 					{% endif %}

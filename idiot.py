@@ -18,12 +18,18 @@ urls = (
 	'/issue/(\d+)/?', 'IIssue'
 )
 
-web.config.debug = True
+web.config.debug = False 
 
 app = web.application(urls, globals())
 
+session_defaults = {
+    'logged': False,
+    'username': False,
+    'password': False
+}
+
 session = web.session.Session(app, web.session.DiskStore('sessions'),
-    initializer={'nothing': None})
+    initializer=session_defaults)
 render = render_jinja('templates', encoding = 'utf-8')
 
 PER_PAGE = 20
@@ -31,8 +37,7 @@ PER_PAGE = 20
 class WebModule:
 
     def logged(self):
-        if hasattr(session,'logged_in') and session.logged_in and \
-            User.check_login(session.username, session.password):
+        if session.get('logged_in', False):
             return True
         else:
             return False
@@ -44,11 +49,12 @@ class WebModule:
             in_config.items('idiot')])
         if self.logged() is True:
             out_config['logged'] = True
-            out_config['yourself'] = User.get(session.username)[0]
+            user = User.get(session.username)[0]
+            out_config['yourself'] = user
         else:
             out_config['logged'] = False
             out_config['yourself'] = None
-        out_config['session'] = repr(session)
+        out_config['session'] = web.debug(session) 
         return out_config
 
     def _project_allowed(self, project_name):
@@ -64,7 +70,6 @@ class WebModule:
 
     def __init__(self):
         self.config = self.read_config()
-
 
 
 class IMain(WebModule):
@@ -128,21 +133,29 @@ class IAdmin(WebModule):
         pass
 
 class ILogin(WebModule):
+
+    def GET(self):
+        return web.seeother('/')
+
     def POST(self):
         username, password = web.input().username, web.input().password 
         if User.login(username, password)[0]['user_login'] is True:
             session.logged_in = True
             session.username = username
-            session.password = hashlib.md5(password).hexdigest()
             return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
         else:
             self.config['error'] = 'Login failed.'
             return render.error(self.config) 
         
 class ILogout(WebModule):
+
+    def GET(self):
+        self.POST()
+
     def POST(self):
-        self.controller.logout(session)
-        return web.seeother('/')
+        session.logged_in = False
+        del session.username
+        return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
 
 
 if __name__ == "__main__":
