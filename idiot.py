@@ -10,6 +10,7 @@ urls = (
     '/?', 'IMain',
     '/login/?', 'ILogin',
     '/logout/?', 'ILogout',
+    '/register/?', 'IRegister',
     '/page/(\d+)/?', 'IBrowse',
     '/project/(\w+)/?', 'IProject',
     '/project/(\w+)/issues/?', 'IProjectIssues',
@@ -35,6 +36,12 @@ render = render_jinja('templates', encoding = 'utf-8')
 PER_PAGE = 20
 
 class WebModule:
+
+    def _get_vars(var_list):
+        result = {}
+        for var in var_list:
+            result[var] = getattr(web.input(), var)
+        return result
 
     def logged(self):
         if session.get('logged_in', False):
@@ -151,7 +158,34 @@ class ILogin(WebModule):
         else:
             self.config['error'] = 'Login failed.'
             return render.error(self.config) 
-        
+
+class IRegister(WebModule):
+    
+    form_vars = ['username', 'full_name', 'password', 'password_confirm', 'email',
+        'url', 'about_you']
+
+    def POST(self):
+        in_vars = self._get_vars(form_vars)
+
+        self.config['error'] = None
+        if in_vars['password'] != in_vars['password_confirm']:
+            self.config['error'] = 'The passwords entered did not match.'
+        elif len(in_vars['password']) < 6:
+            self.config['error'] = \
+                'You must specify a password of at least six characters.'
+        elif len(User.get(in_vars['username'])) > 0:
+            self.config['error'] = 'This username already exists.'
+        elif '@' not in in_vars['email']:
+            self.config['error'] = 'This email address is not valid.'
+
+        if self.config.has_key('error'):
+            return render.register(self.config)
+        else:
+            return render.register_success(self.config)
+
+    def GET(self):
+        return render.register(self.config)
+
 class ILogout(WebModule):
 
     def GET(self):

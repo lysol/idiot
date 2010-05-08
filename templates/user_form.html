@@ -1,0 +1,26 @@
+{% import 'forms.html' as forms %}
+
+  <p>Username<br />
+	{{ forms.input('username') }}
+	</p>
+	<p>Real Name<br />
+	{{ forms.input('full_name') }}
+	</p>
+	<p>Email Address<br />
+	{{ forms.input('email') }}
+	</p>
+	<p>Website<br />
+	{{ forms.input('url') }}
+	</p>
+	<p>Password<br />
+  {{ forms.input('password', type='password') }}
+	</p>
+	<p>Confirm Password<br />
+	{{ forms.input('password_confirm', type='password') }}
+	<p>
+	{{ forms.input('login', value='Login', type='submit') }}
+	</p>
+	<p>About you<br />
+	{{ forms.textarea('about_you', value=default_about) }}
+	</p>
+

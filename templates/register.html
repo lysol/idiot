@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block header %}
+  Register to use {{idiot_title}}
+{% endblock %}
+
+{% block title_crumbs %} - Register{% endblock %}
+
+{% block content %}
+
+  {% if error %}
+    <div class="error">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <div id="user_form">
+    <form action="/register" method="POST">
+      {% import 'user_form.html' as user_form with context %}
+      {{ user_form }}
+    </form>
+  </div>
+
+{% endblock %}

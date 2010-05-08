@@ -1,7 +1,7 @@
-{% macro input(name, value='', type='text') -%}
-  <input type="{{ type }}" value="{{ value|e }}" name="{{ name }}">
+{% macro input(name, value='', type='text', class='a_form') -%}
+  <input type="{{ type }}" value="{{ value|e }}" name="{{ name }}" class="{{ class }}">
 {%- endmacro %}
 
 {%- macro textarea(name, value='', rows=10, cols=40) -%}
-  <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols }}">{{ value|e }}</textarea>
+  <textarea name="{{ name }}" class="{{ class }}">{{ value|e }}</textarea>
 {%- endmacro %}
