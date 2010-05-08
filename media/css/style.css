@@ -1,0 +1,91 @@
+body {
+		padding: 0;
+		margin: 0;
+		font-size: 16px;
+		font-family: helvetica, verdana, arial, sans-serif;
+		background-color: #FFFFFF;
+		position: relative;
+}
+
+a, a:active, a:visited {
+		color: #0000CC;
+		text-decoration: none;
+		font-weight: bold;
+}
+
+a:hover, a:focus {
+		color: #0000CC;
+}
+
+div#idiot_header {
+		background-color: #006dc9;
+		padding: 1em;
+}
+
+div#header {
+		color: #FFFFFF;
+		background-color: #004da9;
+		padding: 1em;
+		position: relative;
+		font-size: 1.2em;
+}
+
+div#user_info {
+		position: absolute;
+		top: 0em;
+		right: 0em;
+		width: 20em;
+		padding: 2em;
+		padding-top: 1em;
+		padding-bottom: 1em;
+		font-size: 80%;
+		background-color: #000000;
+		color: #FFFFFF;
+    -webkit-border-bottom-left-radius: 10px;
+    -moz-border-radius-bottomleft: 10px;
+    border-bottom-left-radius: 10px;
+		z-index: 100;
+}
+
+div#user_info a, div#user_info a:visited, div#user_info a:active {
+	  color: #EEEEFF;
+}
+
+div#header a, div#header a:active, div#header a:visited {
+		color: #FFFFFF;
+}
+
+ul#project_list {
+		list-style: none;
+		padding: 0;
+}
+
+ul#project_list li {
+		margin: 0;
+		padding-left: 0;
+}
+
+ul#issue_list {
+		list-style: none;
+		padding: 0;
+}
+
+ul#issue_list li {
+		margin: 0;
+		padding-left: 0;
+}
+
+div#content {
+		padding: 3em;
+		padding-top: 1em;
+		margin-top: 0;
+		padding-bottom: 1em;
+}
+
+div#footer {
+		padding: 3em;
+		padding: 3em;
+		padding-top: 0;
+		margin-top: 2em;
+}
+		
