@@ -8,8 +8,10 @@
 		<title>{{ idiot_title }}{% block title_crumbs %}{% endblock %}</title>
 
 		<link rel="stylesheet" type="text/css" href="{{idiot_media_path}}css/{{idiot_stylesheet}}" />
-    <script type="text/javascript" src="{{idiot_media_path}}js/mootools.js"></script> 
+    <script type="text/javascript" src="{{idiot_media_path}}js/mootools.js"></script>
+		{% block domready %}
 		<script type="text/javascript" src="{{idiot_media_path}}js/idiot.js"></script>
+		{% endblock %}
 	</head>
 	<body>
     {% block user_section %}

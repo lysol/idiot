@@ -72,15 +72,6 @@ class Project:
         Function("get_public_project_page", ['page', 'per_page'])        
     get_max_issue_page = Function("get_project_max_issue_page",
         ['project', 'per_page'])
-    #get_max_issue_page = Raw("""
-    #    SELECT CASE
-    #        WHEN count(*) % $per_page = 0
-    #        THEN count(*) % $per_page
-    #        ELSE (count(*) / $per_page) + 1
-    #    END AS max_page
-    #    FROM issue
-    #    WHERE project = $project
-    #    """, ['project', 'per_page'])
     owner = Raw("SELECT owner FROM project WHERE name = $project",
         ["project"])
     create = Function("create_project", 
@@ -109,7 +100,7 @@ class User:
     get_page = Function("get_user_page", ['page'])
     delete = Function ("delete_user", ['username'])
     create = Function("create_user", ['username', 'full_name', 'email',
-        'password', 'password_again', 'website', 'admin'])
+        'password', 'password_again', 'website', 'admin', 'about'])
     update = Function("modify_user", ['username', 'full_name', 'email',
         'password', 'password_again', 'website'])
     login = Function("user_login", ['login_username', 'login_password'])

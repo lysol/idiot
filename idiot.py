@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-from ConfigParser import ConfigParser
 import hashlib
+import re
 import web
+from ConfigParser import ConfigParser
 from web.contrib.template import render_jinja
 from model import *
 
@@ -37,7 +38,7 @@ PER_PAGE = 20
 
 class WebModule:
 
-    def _get_vars(var_list):
+    def _get_vars(self, var_list):
         result = {}
         for var in var_list:
             result[var] = getattr(web.input(), var)
@@ -50,14 +51,21 @@ class WebModule:
             return False
 
     def read_config(self):
+        web.debug('Path: %s' % web.ctx.path)
         in_config = ConfigParser()
         in_config.readfp(open('settings.conf'))
         out_config = dict([('idiot_' + x[0], x[1]) for x in \
             in_config.items('idiot')])
         if self.logged() is True:
-            out_config['logged'] = True
-            user = User.get(session.username)[0]
-            out_config['yourself'] = user
+            user = User.get(session.username)
+            if len(user) == 0:
+                session.logged_in = False
+                del session.username
+                out_config['logged'] = False
+                out_config['yourself'] = None
+            else:
+                out_config['logged'] = True
+                out_config['yourself'] = user[0]
         else:
             out_config['logged'] = False
             out_config['yourself'] = None
@@ -67,16 +75,18 @@ class WebModule:
     def _project_allowed(self, project_name):
         """Private method for determining if a project is viewable by
         the user."""
-        if not self.logged() and \
-            Project.is_public(project_name)[0].project_is_public is True:
+        web.debug("Logged: %s" % repr(self.logged()))
+        access = Project.has_access(project_name,
+                session.username)[0].has_project_access
+        if Project.is_public(project_name)[0].project_is_public is True:
             return True
-        elif self.logged() and \
-            Project.has_access(project_name, session.username) is True:
-            return True
-        elif session.has_key('username') and \
-            Project.owner(project_name)[0]['owner'] == session.username:
+        elif self.logged() and access is True:
+            web.debug("Project %s allowed for user %s" % \
+                (project_name, session.username))
             return True
         else:
+            web.debug("Project %s disallowed for user %s" % \
+                (project_name, session.username))
             return False
 
     def __init__(self):
@@ -113,12 +123,17 @@ class IIssue(WebModule):
 class IProject(WebModule):
     def GET(self, project_name):
         if self._project_allowed(project_name):
+            web.debug("Project allowed.")
             result = Project.get(project_name)
-            self.config['project'] = result[0]
+            proj = result[0]
+            web.debug('Project: %s' % repr(proj))
+            self.config['project'] = proj
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
             self.config['issues'] = result
         else:
+            web.debug("Project disallowed.")
             self.config['error'] = "You do not have permission to view this project."
+            return render.error(self.config)
         return render.project(self.config)
 
 class IProjectIssues(WebModule):
@@ -161,13 +176,12 @@ class ILogin(WebModule):
 
 class IRegister(WebModule):
     
-    form_vars = ['username', 'full_name', 'password', 'password_confirm', 'email',
-        'url', 'about_you']
+    form_vars = ['username', 'full_name', 'email', 'password',
+        'password_confirm', 'url', 'about_you']
 
     def POST(self):
-        in_vars = self._get_vars(form_vars)
+        in_vars = self._get_vars(self.form_vars)
 
-        self.config['error'] = None
         if in_vars['password'] != in_vars['password_confirm']:
             self.config['error'] = 'The passwords entered did not match.'
         elif len(in_vars['password']) < 6:
@@ -177,10 +191,27 @@ class IRegister(WebModule):
             self.config['error'] = 'This username already exists.'
         elif '@' not in in_vars['email']:
             self.config['error'] = 'This email address is not valid.'
+        elif not re.match('^[a-zA-Z0-9_]+$', in_vars['username']):
+            self.config['error'] = """Usernames must only contain alphanumeric
+                characters or underscores (_)."""
 
         if self.config.has_key('error'):
+            self.config['rejected_user_info'] = in_vars
             return render.register(self.config)
         else:
+            new_user = User.create(in_vars['username'], in_vars['full_name'],
+                in_vars['email'], in_vars['password'],
+                in_vars['password_confirm'], in_vars['url'], False,
+                in_vars['about_you'])[0]
+            web.debug('New User: %s' % new_user)
+            if not hasattr(new_user, 'username'):
+                self.config['error'] = """An unexpected error occurred.
+                    Please notify an administrator."""
+                return render.error(self.config)
+            session.logged_in = True
+            session.username = new_user.username
+            self.config['new_user'] = new_user
+            self.config['first_name'] = new_user.full_name.split(' ')[0]
             return render.register_success(self.config)
 
     def GET(self):
