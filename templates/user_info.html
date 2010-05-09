@@ -1,5 +1,5 @@
 <p>
  Hello,  
-	  <a href="{{ idiot_app_path }}user/{{ yourself.username }}"><b>{{ yourself.full_name }}</b></a>!
+	  <a href="{{ idiot_app_path }}user/{{ yourself.username }}"><b>{% if yourself.full_name %}{{ yourself.full_name }}{% else %}{{ yourself.username }}{% endif %}</b></a>!
 		(<a href="{{ idiot_app_path }}logout">Logout</a>)
 </p>

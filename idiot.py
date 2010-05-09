@@ -149,9 +149,17 @@ class IProjectIssues(WebModule):
 
 class IUser(WebModule):
     def GET(self, username):
-        # TODO
-        # Display a user profile.
-        pass
+        user = User.get(username)[0]
+        if self.logged():
+            viewing_user = session.username
+        else:
+            viewing_user = ''
+        self.config['recent_issues'] = \
+            User.recent_issues(username, viewing_user, PER_PAGE)
+        self.config['recent_comments'] = \
+            User.recent_comments(username, viewing_user, PER_PAGE)
+        self.config['user'] = user
+        return render.user_profile(self.config)
 
 class IAdmin(WebModule):
     def GET(self):
@@ -211,7 +219,10 @@ class IRegister(WebModule):
             session.logged_in = True
             session.username = new_user.username
             self.config['new_user'] = new_user
-            self.config['first_name'] = new_user.full_name.split(' ')[0]
+            if len(new_user.full_name) > 0:
+                self.config['first_name'] = new_user.full_name.split(' ')[0]
+            else:
+                self.config['first_name'] = new_user.username
             return render.register_success(self.config)
 
     def GET(self):

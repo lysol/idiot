@@ -106,6 +106,10 @@ class User:
     login = Function("user_login", ['login_username', 'login_password'])
     check_login = Function("user_verify", ['login_username', 'md5_password'])
     get_permissions = Function("get_user_permissions", ['username'])
+    recent_comments = Function("get_user_recent_comments",
+        ['viewed_user', 'viewing_user', 'count'])
+    recent_issues = Function("get_user_recent_issues", 
+        ['viewed_user', 'viewing_user', 'count'])
 
 
 class Permission:
