@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block header %}<a href="{{ idiot_app_path }}user/{{ user.username }}">
+{% if user.full_name %}
+  {{ user.full_name }}
+{% else %}
+  {{ user.username }}
+{% endif %}
+</a>
+{% endblock %}
+
+{% block content %}
+
+{% if user.about %}
+  <p>{{ user.about }}</p>
+{% endif %}
+
+{% if user.website %}
+  <p><b>Website:</b> <a href="{{ user.website }}">{{ user.website }}</a></p>
+{% endif %}
+
+<p>
+Recent Issues
+  <ul id="issue_list">
+{% for issue in recent_issues %}
+	  <li><a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
+{% endfor %}
+  </ul>
+</p>
+
+<p>
+Recent Comments
+</p>
+
+
+
+{% endblock %}

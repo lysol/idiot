@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title_crumbs %} - Success{% endblock %}
+
+{% block header %}
+Success!
+{% endblock %}
+
+{% block content %}
+<p>
+Thanks for registering, <b>{{ first_name }}</b>!  We automatically grabbed this from your full name, so apologies if this isn't actually your first name.
+</p>
+
+<p>
+Let's head back to the <a href="{{ idiot_app_path }}">main page</a>.
+You'll be automatically redirected if you don't click anyhere.
+</p>
+{% endblock %}

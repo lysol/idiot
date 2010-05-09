@@ -83,13 +83,13 @@ class Project:
 class Issue:
 
     all = Function("get_all_issues")
-    #get = Function("get_issue", ['seq'])
     get = Raw("SELECT * FROM issue WHERE seq = $seq", ['seq'])
-    #get_page = Function("get_issue_page", ['project', 'page'])
     delete = Function("delete_issue", ['seq'])
     create = Function("create_issue",
-        ['project', 'summary', 'description', 'author'])
-    update = Function("modify_issue", ['seq', 'summary', 'description'])
+        ['project', 'summary', 'description', 'author', 'severity',
+        'issue_type'])
+    update = Function("modify_issue",
+        ['seq', 'summary', 'description', 'severity', 'issue_type', 'status'])
     get_threads = Function("get_issue_threads", ['seq'])
 
 
