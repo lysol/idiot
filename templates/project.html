@@ -22,9 +22,12 @@ Owner: <a href="{{idiot_app_path}}user/{{project.owner}}">{{owner.full_name}}</a
   </ul>
 </p>
 
-
 <p>
-  <a href="{{idiot_app_path}}project/{{project.name}}/issues/">View All Issues</a>
+<h2>Actions</h2>
+<ul>
+ <li><a href="{{idiot_app_path}}project/issues/add">Create a new issue</a></li>
+ <li><a href="{{idiot_app_path}}project/{{project.name}}/issues/">View all issues</a></li>
+</ul>
 </p>
 {% else %}
 
