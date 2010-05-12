@@ -23,7 +23,7 @@
 Recent Issues
   <ul id="issue_list">
 {% for issue in recent_issues %}
-	  <li><a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
+	  <li>{{issue.seq}}: <a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
 {% endfor %}
   </ul>
 </p>

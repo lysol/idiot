@@ -15,6 +15,7 @@ urls = (
     '/page/(\d+)/?', 'IBrowse',
     '/project/(\w+)/?', 'IProject',
     '/project/(\w+)/issues/?', 'IProjectIssues',
+    '/project/(\w+)/issues/page/(\d+)/?', 'IProjectIssues',
     '/user/(\w+)/?', 'IUser',
     '/admin/?', 'IAdmin',
 	'/issue/(\d+)/?', 'IIssue'
@@ -32,6 +33,7 @@ session_defaults = {
 
 session = web.session.Session(app, web.session.DiskStore('sessions'),
     initializer=session_defaults)
+web.debug(session)
 render = render_jinja('templates', encoding = 'utf-8')
 
 PER_PAGE = 20
@@ -69,28 +71,35 @@ class WebModule:
         else:
             out_config['logged'] = False
             out_config['yourself'] = None
-        out_config['session'] = web.debug(session) 
+        if out_config['idiot_app_path'] in web.ctx.env.get('HTTP_REFERER','/'):
+            out_config['last_url'] = web.ctx.env.get('HTTP_REFERER','/')
         return out_config
 
     def _project_allowed(self, project_name):
         """Private method for determining if a project is viewable by
         the user."""
         web.debug("Logged: %s" % repr(self.logged()))
+        if not hasattr(session, 'username') or session.username is False:
+            username = ''
+        else:
+            username = session.username
+        web.debug("Project Allowed: Username is %s" % username)
         access = Project.has_access(project_name,
-                session.username)[0].has_project_access
+                username)[0].has_project_access
         if Project.is_public(project_name)[0].project_is_public is True:
             return True
         elif self.logged() and access is True:
             web.debug("Project %s allowed for user %s" % \
-                (project_name, session.username))
+                (project_name, username))
             return True
         else:
             web.debug("Project %s disallowed for user %s" % \
-                (project_name, session.username))
+                (project_name, username))
             return False
 
     def __init__(self):
         self.config = self.read_config()
+        web.debug("Session: %s" % repr(session))
 
 
 class IMain(WebModule):
@@ -114,6 +123,9 @@ class IIssue(WebModule):
             self.config['issue'] = issue
             self.config['project'] = Project.get(issue.project)[0]
             self.config['author'] = User.get(issue.author)[0]
+            if session.last_project and session.last_issue_page:
+                self.config['last_project'] = session.last_project
+                self.config['last_issue_page'] = session.last_issue_page
         else:
             self.config['error'] = "This issue is attached to a project" + \
                 " you do not have permission to access."
@@ -125,11 +137,12 @@ class IProject(WebModule):
         if self._project_allowed(project_name):
             web.debug("Project allowed.")
             result = Project.get(project_name)
-            proj = result[0]
-            web.debug('Project: %s' % repr(proj))
-            self.config['project'] = proj
+            project = result[0]
+            web.debug('Project: %s' % repr(project))
+            self.config['project'] = project
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
-            self.config['issues'] = result
+            self.config['recent_issues'] = result
+            self.config['owner'] = User.get(project.owner)[0]
         else:
             web.debug("Project disallowed.")
             self.config['error'] = "You do not have permission to view this project."
@@ -143,6 +156,19 @@ class IProjectIssues(WebModule):
             self.config['project'] = result[0]
             result = Project.get_issue_page(project_name, page, PER_PAGE)
             self.config['issues'] = result
+            self.config['owner'] = User.get(self.config['project'].owner)[0]
+            self.config['max_page'] = \
+                Project.get_max_issue_page(project_name, PER_PAGE)
+            if int(page) > 1:
+                self.config['prev_page_url'] = \
+                    "%sproject/%s/issues/page/%d" % \
+                    (self.config['idiot_app_path'], project_name, int(page) - 1)
+            if int(page) < self.config['max_page']:
+                self.config['next_page_url'] = \
+                    "%sproject/%s/issues/page/%d" % \
+                    (self.config['idiot_app_path'], project_name, int(page) + 1)
+            session.last_project = project_name
+            session.last_issue_page = page
         else:
             self.config['error'] = "You do not have permission to view this project."
         return render.project_issues(self.config)

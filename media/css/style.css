@@ -73,6 +73,7 @@ ul#issue_list {
 ul#issue_list li {
 		margin: 0;
 		padding-left: 0;
+		font-weight: bold;
 }
 
 div#content {

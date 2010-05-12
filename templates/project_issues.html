@@ -3,18 +3,31 @@
 
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: {{project.owner}}
+Owner: <a href="{{idiot_app_path}}user/{{owner.username}}">{{owner.full_name}}</a>
 {% endblock %}
 
 {% block content %}
 {% if not error %}
-<h2>Recent issues</h2>
+<h2>Viewing Issues</h2>
 
 <ul id="issue_list">
   {% for issue in issues %}
-	  <li><a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
+	  <li>{{issue.seq}}: <a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
 	{% endfor %}
 </ul>
+
+<p id="page_nav">
+  {% if prev_page_url %}
+	  <a href="{{ prev_page_url }}">Newer Issues</a>
+  {% endif %}
+	{% if next_page_url %}
+	  <a href="{{ next_page_url }}">Older Issues</a>
+	{% endif %}
+</p>
+
+<p>
+<a href="{{idiot_app_path}}project/{{project.name}}">{{project.full_name}} Project Page</a>
+</p>
 
 {% else %}
 

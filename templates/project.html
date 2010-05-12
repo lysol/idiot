@@ -2,13 +2,29 @@
 
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: {{project.owner}}
+Owner: <a href="{{idiot_app_path}}user/{{project.owner}}">{{owner.full_name}}</a>
 {% endblock %}
 
 {% block content %}
 {% if not error %}
+
 <p>
-  <a href="{{idiot_app_path}}project/{{project.name}}/issues/">View Project Issues</a>
+<h2>Description</h2>
+{{project.description}}
+</p>
+
+<p>
+<h2>Recent Issues</h2>
+  <ul id="issue_list">
+{% for issue in recent_issues %}
+	  <li>{{issue.seq}}: <a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
+{% endfor %}
+  </ul>
+</p>
+
+
+<p>
+  <a href="{{idiot_app_path}}project/{{project.name}}/issues/">View All Issues</a>
 </p>
 {% else %}
 

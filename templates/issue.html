@@ -2,7 +2,6 @@
 
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: {{project.owner}}
 {% endblock %}
 
 {% block title_crumbs %} - Issue {{issue.seq}}: {{issue.summary}}{% endblock %}
@@ -10,9 +9,18 @@ Owner: {{project.owner}}
 {% block content %}
 {% if not error %}
 <h2>Issue {{issue.seq}}: {{issue.summary}}</h2>
-<h3>Owner: {{author.full_name}}</h3>
+<h3>Owner: <a href="{{idiot_app_path}}user/{{author.username}}">{{author.full_name}}</a></h3>
 
 <p>{{issue.description}}</p>
+
+<p>
+				{% if last_project and last_issue_page %}
+				<a href="{{idiot_app_path}}project/{{project.name}}/issues/page/{{last_issue_page}}">Back to Issue List</a>
+				{% else %}
+				<a href="{{idiot_app_path}}project/{{project.name}}/issues">Back to Issue List</a>
+				{% endif %}
+</p>
+
 {% else %}
 
 <h2>Error</h2>
