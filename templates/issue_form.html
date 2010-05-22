@@ -1,12 +1,13 @@
 {% import 'forms.html' as forms %}
 
-  <p>Project<br />
+
 	{% if project is defined %}
-	{{ forms.select('project', value=project, options=projects) }}
+	{{ forms.input('project', type='hidden', value=project.name) }}
 	{% else %}
+  <p>Project<br />
 	{{ forms.select('project', options=projects) }}
-	{% endif %}
 	</p>
+  {% endif %}
 	<p>Summary<br />
 	{{ forms.input('summary') }}
 	</p>

@@ -17,6 +17,7 @@ urls = (
     '/project/(\w+)/issues/?', 'IProjectIssues',
     '/project/(\w+)/issues/page/(\d+)/?', 'IProjectIssues',
     '/project/(\w+)/issues/create/?', 'ICreateIssue',
+    '/issues/create/?', 'ICreateIssue',
     '/user/(\w+)/?', 'IUser',
     '/admin/?', 'IAdmin',
 	'/issue/(\d+)/?', 'IIssue'
@@ -223,10 +224,12 @@ class ICreateIssue(WebModule):
     def POST(self):
         in_vars = self._get_vars(self.form_vars)
 
-    def GET(self, project_name):
+    def GET(self, project_name = None):
         if self.logged():
             viewing_user = session.username
-            self.config['project'] = project_name
+            if project_name is not None:
+                self.config['project'] = Project.get(project_name)[0]
+                web.debug(self.config['project'])
             self.config['projects'] = [project.name for project in \
                 Project.all_for_user(viewing_user)]
             self.config['severities'] = [severity.get_severities for \

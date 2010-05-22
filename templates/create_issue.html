@@ -1,12 +1,20 @@
 {% extends "base.html" %}
 
 {% block header %}
-Create an issue
+{% if project is defined %}
+<b>{{ project.full_name }}</b>
+{% else %}
+Create an Issue
+{% endif %}
 {% endblock %}
 
 {% block title_crumbs %} - Create an Issue{% endblock %}
 
 {% block content %}
+
+  {% if project is defined %}
+  <h2>Create an Issue</h2>
+  {% endif %}
 
   {% if error %}
     <div class="error">
@@ -15,7 +23,11 @@ Create an issue
   {% endif %}
 
   <div id="issue_form">
-    <form action="{{idiot_app_path}}project/{{project}}/issues/create" method="POST">
+    {% if project is defined %}
+    <form action="{{idiot_app_path}}project/{{project.name}}/issues/create" method="POST">
+    {% else %}
+    <form action="{{idiot_app_path}}issues/create" method="POST">
+    {% endif %}
       {% import 'issue_form.html' as issue_form with context %}
       {{ issue_form }}
 			<input type="submit" value="Create Issue" />
