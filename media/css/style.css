@@ -102,3 +102,31 @@ textarea.a_form {
 select.a_form {
 		width: 15em;
 }
+
+ul#issue_details {
+		padding: 0;
+		margin: 0;
+		margin-bottom: 2em;
+		list-style: none;
+}
+
+ul#issue_details li {
+		padding-left: 0;
+		font-size: 90%;
+}
+
+p#issue_description {
+		background-color: #FCFCFC;
+		margin-bottom: 3em;
+		padding: 2em;
+}
+
+div.comment {
+		font-size: 90%;
+		margin-left: 2em;
+		margin-bottom: 2em;
+}
+
+div.comment_head {
+		font-weight: bold;
+}

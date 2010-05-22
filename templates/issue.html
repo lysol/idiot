@@ -14,20 +14,25 @@ Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_na
   <a href="{{idiot_app_path}}issue/{{ issue.seq }}/update">Update Issue</a>
 </p>
 {% endif %}
-<h3>Owner: <a href="{{ idiot_app_path }}user/{{ author.username }}">{{ author.full_name }}</a></h3>
-<h3>Type: {{ issue.type|capitalize }}</h3>
-<h3>Severity: {{ issue.severity|capitalize }}</h3>
-<h3>Status: {{ issue.status|capitalize }}</h3>
-<p>{{issue.description}}</p>
+
+<ul id="issue_details">
+<li>Owner: <a href="{{ idiot_app_path }}user/{{ author.username }}">{{ author.full_name }}</a></li>
+<li>Type: <b>{{ issue.type|capitalize }}</b></li>
+<li>Severity: <b>{{ issue.severity|capitalize }}</b></li>
+<li>Status: <b>{{ issue.status|capitalize }}</b></li>
+</ul>
+
+<p id="issue_description">{{issue.description}}</p>
 
 {% if comments|count > 1 %}
 
 <h3>Comments</h3>
 
 {% for comment in comments %}
-  <p class="comment">{{ comment.author.full_name }} added:<br />
+  <div class="comment">
+    <div class="comment_head"><a href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on {{ comment.timestamp }}</div>
   {{ comment.comment }}
-  </p>
+  </div>
 {% endfor %}
 
 {% endif %}

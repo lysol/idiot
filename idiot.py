@@ -3,9 +3,9 @@ import hashlib
 import re
 import web
 from ConfigParser import ConfigParser
-from web.contrib.template import render_jinja
+from jinja2 import Environment, FileSystemLoader
 from model import *
-
+import os
 
 urls = (
     '/?', 'IMain',
@@ -37,9 +37,28 @@ session_defaults = {
 session = web.session.Session(app, web.session.DiskStore('sessions'),
     initializer=session_defaults)
 web.debug(session)
-render = render_jinja('templates', encoding = 'utf-8')
+#render = render_jinja('templates', encoding = 'utf-8')
 
 PER_PAGE = 20
+
+### Jinja2 Related functions. TODO: Move somewhere else.
+
+def datetimeformat(value, format='%Y-%m-%d at %H:%M'):
+    return value.strftime(format)
+
+def render_template(template_name, context):
+    extensions = context.pop('extensions', [])
+    globals = context.pop('globals', {})
+
+    jinja_env = Environment(
+            loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')),
+            extensions=extensions,
+            )
+    jinja_env.filters['datetimeformat'] = datetimeformat
+    jinja_env.globals.update(globals)
+
+    return jinja_env.get_template(template_name).render(context)
+
 
 class WebModule:
 
@@ -129,7 +148,7 @@ class IBrowse(WebModule):
             username = session.username
         results = Project().get_project_page(page, PER_PAGE, username)
         self.config['projects'] = results
-        return render.browse(self.config)
+        return render_template('browse.html', self.config)
 
 
 class IIssue(WebModule):
@@ -163,8 +182,8 @@ class IIssue(WebModule):
         else:
             self.config['error'] = "This issue is attached to a project" + \
                 " you do not have permission to access."
-            return render.error(self.config)
-        return render.issue(self.config)    
+            return render_template('error.html', self.config)
+        return render_template('issue.html', self.config)    
 
 
 class IProject(WebModule):
@@ -182,8 +201,8 @@ class IProject(WebModule):
         else:
             web.debug("Project disallowed.")
             self.config['error'] = "You do not have permission to view this project."
-            return render.error(self.config)
-        return render.project(self.config)
+            return render_template('error.html', self.config)
+        return render_template('project.html', self.config)
 
 
 class IProjectIssues(WebModule):
@@ -208,7 +227,7 @@ class IProjectIssues(WebModule):
             session.last_issue_page = page
         else:
             self.config['error'] = "You do not have permission to view this project."
-        return render.project_issues(self.config)
+        return render_template('project_issues.html', self.config)
 
 
 class IUser(WebModule):
@@ -223,7 +242,7 @@ class IUser(WebModule):
         self.config['recent_comments'] = \
             User.recent_comments(username, viewing_user, PER_PAGE)
         self.config['user'] = user
-        return render.user_profile(self.config)
+        return render_template('user_profile.html', self.config)
 
 class IAdmin(WebModule):
     def GET(self):
@@ -245,7 +264,7 @@ class ILogin(WebModule):
             return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
         else:
             self.config['error'] = 'Login failed.'
-            return render.error(self.config) 
+            return render_template('error.html', self.config) 
 
 class IUpdateIssue(WebModule):
     
@@ -275,7 +294,7 @@ class IUpdateIssue(WebModule):
                 issue_type in Issue.types()]   
             self.config['issue_statuses'] = [issue_status.get_issue_statuses \
                 for issue_status in Issue.statuses()]                 
-            return render.update_issue(self.config)
+            return render_template('update_issue.html', self.config)
         else:
             self.config['error'] = \
                 'You do not have permission to update this issue.'
@@ -296,7 +315,7 @@ class ICreateIssue(WebModule):
                 project = project_name
             else:
                 self.config['error'] = 'No project specified.'
-                return render.error(self.config)
+                return render_template('error.html', self.config)
 
             viewing_user = session.username
             try:
@@ -307,7 +326,7 @@ class ICreateIssue(WebModule):
             except:
                 self.config['error'] = 'An error occurred while ' + \
                     'creating this issue.'
-                return render.error(self.config)
+                return render_template('error.html', self.config)
             
             return web.seeother('/issue/%d' % new_issue.seq)
 
@@ -323,10 +342,10 @@ class ICreateIssue(WebModule):
                 severity in Issue.severities()]
             self.config['issue_types'] = [issue_type.get_issue_types for \
                 issue_type in Issue.types()]
-            return render.create_issue(self.config)
+            return render_template('create_issue.html', self.config)
         else:
             self.config['error'] = 'You must be logged in to create issues.'
-            return render.error(self.config)
+            return render_template('error.html', self.config)
         
 
 class IRegister(WebModule):
@@ -352,7 +371,7 @@ class IRegister(WebModule):
 
         if self.config.has_key('error'):
             self.config['rejected_user_info'] = in_vars
-            return render.register(self.config)
+            return render_template('register.html', self.config)
         else:
             new_user = User.create(in_vars['username'], in_vars['full_name'],
                 in_vars['email'], in_vars['password'],
@@ -362,7 +381,7 @@ class IRegister(WebModule):
             if not hasattr(new_user, 'username'):
                 self.config['error'] = """An unexpected error occurred.
                     Please notify an administrator."""
-                return render.error(self.config)
+                return render_template('error.html', self.config)
             session.logged_in = True
             session.username = new_user.username
             self.config['new_user'] = new_user
@@ -370,10 +389,10 @@ class IRegister(WebModule):
                 self.config['first_name'] = new_user.full_name.split(' ')[0]
             else:
                 self.config['first_name'] = new_user.username
-            return render.register_success(self.config)
+            return render_template('register_success.html', self.config)
 
     def GET(self):
-        return render.register(self.config)
+        return render_template('register.html', self.config)
 
 class ILogout(WebModule):
 
