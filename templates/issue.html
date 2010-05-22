@@ -20,6 +20,18 @@ Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_na
 <h3>Status: {{ issue.status|capitalize }}</h3>
 <p>{{issue.description}}</p>
 
+{% if comments|count > 1 %}
+
+<h3>Comments</h3>
+
+{% for comment in comments %}
+  <p class="comment">{{ comment.author.full_name }} added:<br />
+  {{ comment.comment }}
+  </p>
+{% endfor %}
+
+{% endif %}
+
 <p>
 				{% if last_project and last_issue_page %}
 				<a href="{{idiot_app_path}}project/{{project.name}}/issues/page/{{last_issue_page}}">Back to Issue List</a>

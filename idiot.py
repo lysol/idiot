@@ -133,6 +133,7 @@ class IBrowse(WebModule):
 
 
 class IIssue(WebModule):
+
     def GET(self, issue_id):
         issue = Issue.get(issue_id)[0]
         if self._project_allowed(issue.project):
@@ -141,7 +142,20 @@ class IIssue(WebModule):
             self.config['author'] = User.get(issue.author)[0]
             self.config['write_allowed'] = \
                 self._issue_write_allowed(issue_id)
-                
+            self.config['comments'] = []
+            for thread in Comment.get_issue_threads(issue_id):
+                self.config['comments'].append(thread)
+            # Build an authors list and pull them from the list to save
+            # some query currency.
+            authors = []
+            author_dict = {}
+            for index, comment in enumerate(self.config['comments']):
+                if comment.author not in [a.username for a in authors]:
+                    authors.append(User.get(comment.author)[0])
+                found_author = filter(lambda x: x.username == comment.author,
+                    authors)[0]
+                self.config['comments'][index].author = found_author
+
             if hasattr(session, 'last_project') and \
                 hasattr(session, 'last_issue_page'):
                 self.config['last_project'] = session.last_project
