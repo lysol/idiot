@@ -17,7 +17,8 @@ urls = (
     '/project/(\w+)/issues/?', 'IProjectIssues',
     '/project/(\w+)/issues/page/(\d+)/?', 'IProjectIssues',
     '/project/(\w+)/issues/create/?', 'ICreateIssue',
-    '/issues/create/?', 'ICreateIssue',
+    '/issue/create/?', 'ICreateIssue',
+    '/issue/(\d+)/update/?', 'IUpdateIssue',
     '/user/(\w+)/?', 'IUser',
     '/admin/?', 'IAdmin',
 	'/issue/(\d+)/?', 'IIssue'
@@ -77,6 +78,17 @@ class WebModule:
             out_config['last_url'] = web.ctx.env.get('HTTP_REFERER','/')
         return out_config
 
+    def _issue_write_allowed(self, issue_seq):
+        """Private method for determining if an issue is editable by
+        the user."""
+
+        if not hasattr(session, 'username') or session.username is False:
+            username = ''
+        else:
+            username = session.username
+        return Issue.has_write_access(issue_seq,
+            username)[0].has_issue_write_access
+    
     def _project_allowed(self, project_name):
         """Private method for determining if a project is viewable by
         the user."""
@@ -127,6 +139,9 @@ class IIssue(WebModule):
             self.config['issue'] = issue
             self.config['project'] = Project.get(issue.project)[0]
             self.config['author'] = User.get(issue.author)[0]
+            self.config['write_allowed'] = \
+                self._issue_write_allowed(issue_id)
+                
             if hasattr(session, 'last_project') and \
                 hasattr(session, 'last_issue_page'):
                 self.config['last_project'] = session.last_project
@@ -218,6 +233,40 @@ class ILogin(WebModule):
             self.config['error'] = 'Login failed.'
             return render.error(self.config) 
 
+class IUpdateIssue(WebModule):
+    
+    form_vars = ['summary', 'description', 'severity',
+        'issue_type', 'issue_status']
+
+    def POST(self, seq):
+        in_vars = self._get_vars(self.form_vars)
+        if self.logged() and \
+            self._issue_write_allowed(seq):
+
+            Issue.update(seq, in_vars['summary'],
+                in_vars['description'], in_vars['severity'],
+                in_vars['issue_type'], in_vars['issue_status'])
+            return web.seeother('/issue/%d' % int(seq))
+    
+    def GET(self, seq):
+        if self.logged() and \
+            self._issue_write_allowed(seq):
+
+            issue = Issue.get(seq)[0]
+            self.config['issue'] = issue
+            self.config['project'] = Project.get(issue.project)[0]
+            self.config['severities'] = [severity.get_severities for \
+                severity in Issue.severities()]
+            self.config['issue_types'] = [issue_type.get_issue_types for \
+                issue_type in Issue.types()]   
+            self.config['issue_statuses'] = [issue_status.get_issue_statuses \
+                for issue_status in Issue.statuses()]                 
+            return render.update_issue(self.config)
+        else:
+            self.config['error'] = \
+                'You do not have permission to update this issue.'
+            return self.error(self.config)
+
 
 class ICreateIssue(WebModule):
 
@@ -242,10 +291,9 @@ class ICreateIssue(WebModule):
                     in_vars['severity'], in_vars['issue_type'])[0]
                 web.debug('New issue: %s' % repr(new_issue))
             except:
-                else:
-                    self.config['error'] = 'An error occurred while ' + \
-                        'creating this issue.'
-                    return render.error(self.config)
+                self.config['error'] = 'An error occurred while ' + \
+                    'creating this issue.'
+                return render.error(self.config)
             
             return web.seeother('/issue/%d' % new_issue.seq)
 

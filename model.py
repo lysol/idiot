@@ -92,6 +92,9 @@ class Issue:
     get_threads = Function("get_issue_threads", ['seq'])
     severities = Function("get_severities")
     types = Function("get_issue_types")
+    statuses = Function("get_issue_statuses")
+    has_write_access = Function("has_issue_write_access",
+        ['issue_seq', 'username'])
 
 
 class User:

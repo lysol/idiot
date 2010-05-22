@@ -1,0 +1,17 @@
+{% import 'forms.html' as forms %}
+
+	<p>Summary<br />
+	{{ forms.input('summary', value=issue.summary) }}
+	</p>
+	<p>Full description of your issue<br />
+	{{ forms.textarea('description', value=issue.description) }}
+	</p>
+	<p>Severity<br />
+	{{ forms.select('severity', options=severities, value=issue.severity) }}
+	</p>
+	<p>Type<br />
+  {{ forms.select('issue_type', options=issue_types, value=issue.type) }}
+	</p>
+	<p>Status<br />
+	{{ forms.select('issue_status', options=issue_statuses, value=issue.status) }}
+	</p>

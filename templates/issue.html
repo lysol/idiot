@@ -8,9 +8,16 @@ Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_na
 
 {% block content %}
 {% if not error %}
-<h2>Issue {{issue.seq}}: {{issue.summary}}</h2>
-<h3>Owner: <a href="{{idiot_app_path}}user/{{author.username}}">{{author.full_name}}</a></h3>
-
+<h2>Issue {{ issue.seq }}: {{ issue.summary }}</h2>
+{% if write_allowed %}
+<p>
+  <a href="{{idiot_app_path}}issue/{{ issue.seq }}/update">Update Issue</a>
+</p>
+{% endif %}
+<h3>Owner: <a href="{{ idiot_app_path }}user/{{ author.username }}">{{ author.full_name }}</a></h3>
+<h3>Type: {{ issue.type|capitalize }}</h3>
+<h3>Severity: {{ issue.severity|capitalize }}</h3>
+<h3>Status: {{ issue.status|capitalize }}</h3>
 <p>{{issue.description}}</p>
 
 <p>
