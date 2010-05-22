@@ -127,7 +127,8 @@ class IIssue(WebModule):
             self.config['issue'] = issue
             self.config['project'] = Project.get(issue.project)[0]
             self.config['author'] = User.get(issue.author)[0]
-            if session.last_project and session.last_issue_page:
+            if hasattr(session, 'last_project') and \
+                hasattr(session, 'last_issue_page'):
                 self.config['last_project'] = session.last_project
                 self.config['last_issue_page'] = session.last_issue_page
         else:
@@ -148,6 +149,7 @@ class IProject(WebModule):
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
             self.config['recent_issues'] = result
             self.config['owner'] = User.get(project.owner)[0]
+            session.last_project = project_name
         else:
             web.debug("Project disallowed.")
             self.config['error'] = "You do not have permission to view this project."
@@ -221,8 +223,31 @@ class ICreateIssue(WebModule):
 
     form_vars = ['project', 'summary', 'description', 'severity', 'issue_type']
 
-    def POST(self):
-        in_vars = self._get_vars(self.form_vars)
+    def POST(self, project_name = None):
+        if self.logged():
+            in_vars = self._get_vars(self.form_vars)
+            project = ''
+            if 'project' in in_vars.keys():
+                project = in_vars['project']
+            elif project_name is not None:
+                project = project_name
+            else:
+                self.config['error'] = 'No project specified.'
+                return render.error(self.config)
+
+            viewing_user = session.username
+            try:
+                new_issue = Issue.create(project, in_vars['summary'],
+                    in_vars['description'], viewing_user,
+                    in_vars['severity'], in_vars['issue_type'])[0]
+                web.debug('New issue: %s' % repr(new_issue))
+            except:
+                else:
+                    self.config['error'] = 'An error occurred while ' + \
+                        'creating this issue.'
+                    return render.error(self.config)
+            
+            return web.seeother('/issue/%d' % new_issue.seq)
 
     def GET(self, project_name = None):
         if self.logged():
