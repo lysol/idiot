@@ -1,0 +1,22 @@
+{% import 'forms.html' as forms %}
+
+  <p>Project<br />
+	{% if project is defined %}
+	{{ forms.select('project', value=project, options=projects) }}
+	{% else %}
+	{{ forms.select('project', options=projects) }}
+	{% endif %}
+	</p>
+	<p>Summary<br />
+	{{ forms.input('summary') }}
+	</p>
+	<p>Full description of your issue<br />
+	{{ forms.textarea('description') }}
+	</p>
+	<p>Severity<br />
+	{{ forms.select('severity', options=severities) }}
+	</p>
+	<p>Type<br />
+  {{ forms.select('issue_type', options=issue_types) }}
+	</p>
+

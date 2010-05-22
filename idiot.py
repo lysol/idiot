@@ -16,6 +16,7 @@ urls = (
     '/project/(\w+)/?', 'IProject',
     '/project/(\w+)/issues/?', 'IProjectIssues',
     '/project/(\w+)/issues/page/(\d+)/?', 'IProjectIssues',
+    '/project/(\w+)/issues/create/?', 'ICreateIssue',
     '/user/(\w+)/?', 'IUser',
     '/admin/?', 'IAdmin',
 	'/issue/(\d+)/?', 'IIssue'
@@ -106,15 +107,17 @@ class IMain(WebModule):
     def GET(self):
         return web.seeother('/page/1/')
 
+
 class IBrowse(WebModule):
     def GET(self, page=1):
         if not self.logged():
-            results = Project().get_public_project_page(page, PER_PAGE)
+            username = ''
         else:
-            results = Project().get_user_project_page(page, PER_PAGE,
-                session.username)
+            username = session.username
+        results = Project().get_project_page(page, PER_PAGE, username)
         self.config['projects'] = results
         return render.browse(self.config)
+
 
 class IIssue(WebModule):
     def GET(self, issue_id):
@@ -132,6 +135,7 @@ class IIssue(WebModule):
             return render.error(self.config)
         return render.issue(self.config)    
 
+
 class IProject(WebModule):
     def GET(self, project_name):
         if self._project_allowed(project_name):
@@ -148,6 +152,7 @@ class IProject(WebModule):
             self.config['error'] = "You do not have permission to view this project."
             return render.error(self.config)
         return render.project(self.config)
+
 
 class IProjectIssues(WebModule):
     def GET(self, project_name, page=1):
@@ -173,6 +178,7 @@ class IProjectIssues(WebModule):
             self.config['error'] = "You do not have permission to view this project."
         return render.project_issues(self.config)
 
+
 class IUser(WebModule):
     def GET(self, username):
         user = User.get(username)[0]
@@ -193,6 +199,7 @@ class IAdmin(WebModule):
         # Admin panel
         pass
 
+
 class ILogin(WebModule):
 
     def GET(self):
@@ -207,6 +214,30 @@ class ILogin(WebModule):
         else:
             self.config['error'] = 'Login failed.'
             return render.error(self.config) 
+
+
+class ICreateIssue(WebModule):
+
+    form_vars = ['project', 'summary', 'description', 'severity', 'issue_type']
+
+    def POST(self):
+        in_vars = self._get_vars(self.form_vars)
+
+    def GET(self, project_name):
+        if self.logged():
+            viewing_user = session.username
+            self.config['project'] = project_name
+            self.config['projects'] = [project.name for project in \
+                Project.all_for_user(viewing_user)]
+            self.config['severities'] = [severity.get_severities for \
+                severity in Issue.severities()]
+            self.config['issue_types'] = [issue_type.get_issue_types for \
+                issue_type in Issue.types()]
+            return render.create_issue(self.config)
+        else:
+            self.config['error'] = 'You must be logged in to create issues.'
+            return render.error(self.config)
+        
 
 class IRegister(WebModule):
     

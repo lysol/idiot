@@ -2,6 +2,14 @@
   <input type="{{ type }}" value="{{ value|e }}" name="{{ name }}" class="{{ class }}">
 {%- endmacro %}
 
-{%- macro textarea(name, value='', rows=10, cols=40) -%}
+{%- macro textarea(name, value='', class='a_form') -%}
   <textarea name="{{ name }}" class="{{ class }}">{{ value|e }}</textarea>
+{%- endmacro %}
+
+{%- macro select(name, value='', options = [], class='a_form') -%}
+  <select name="{{ name }}" class="{{ class }}">
+	{% for option in options %}
+	  <option value="{{ option }}"{% if value|e == option|e %}selected {% endif %}>{{ option|e }}</option>
+	{% endfor %}
+	</select>
 {%- endmacro %}

@@ -60,16 +60,15 @@ class Project:
 
     all = Function("get_projects", ['public_only'])
     get = Function("get_project", ['project_name'])
+    all_for_user = Function("get_user_projects", ['username'])
     has_access = Function("has_project_access", ['project_name', 'username'])
     is_public = Function("project_is_public", ['project_name'])
     delete = Function("delete_project", ['name'])
     get_all_issues = Function("get_project_issues", ['name'])
     get_issue_page = Function("get_project_issue_page", 
         ['name', 'page', 'per_page'])
-    get_user_project_page = \
-        Function("get_user_project_page", ['page', 'per_page', 'username'])
-    get_public_project_page = \
-        Function("get_public_project_page", ['page', 'per_page'])        
+    get_project_page = \
+        Function("get_user_project_page", ['page', 'per_page', 'username'])      
     get_max_issue_page = Function("get_project_max_issue_page",
         ['project', 'per_page'])
     owner = Raw("SELECT owner FROM project WHERE name = $project",
@@ -91,6 +90,8 @@ class Issue:
     update = Function("modify_issue",
         ['seq', 'summary', 'description', 'severity', 'issue_type', 'status'])
     get_threads = Function("get_issue_threads", ['seq'])
+    severities = Function("get_severities")
+    types = Function("get_issue_types")
 
 
 class User:

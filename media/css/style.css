@@ -89,4 +89,16 @@ div#footer {
 		padding-top: 0;
 		margin-top: 2em;
 }
-		
+
+input.a_form {
+		width: 40em;
+}
+
+textarea.a_form {
+		width: 40em;
+		height: 15em;
+}
+
+select.a_form {
+		width: 15em;
+}
