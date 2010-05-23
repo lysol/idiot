@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% import 'issue_table.html' as issue_table with context %}
+
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
 Owner: <a href="{{idiot_app_path}}user/{{project.owner}}">{{owner.full_name}}</a>
@@ -10,23 +12,20 @@ Owner: <a href="{{idiot_app_path}}user/{{project.owner}}">{{owner.full_name}}</a
 
 <p>
 <h2>Description</h2>
-{{project.description}}
+<div id="project_description">{{project.description}}</div>
 </p>
 
 <p>
 <h2>Recent Issues</h2>
-  <ul id="issue_list">
-{% for issue in recent_issues %}
-	  <li>{{issue.seq}}: <a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
-{% endfor %}
-  </ul>
+
+  {{ issue_table.issue_table(recent_issues, with_links=True) }}
+
 </p>
 
 <p>
-<h2>Actions</h2>
-<ul>
- <li><a href="{{idiot_app_path}}project/{{project.name}}/issue/create">Create a new issue</a></li>
- <li><a href="{{idiot_app_path}}project/{{project.name}}/issues/">View all issues</a></li>
+<ul class="action_list">
+ <li><a class="button" href="{{idiot_app_path}}project/{{project.name}}/issue/create">Create a new issue</a></li>
+ <li><a class="button" href="{{idiot_app_path}}project/{{project.name}}/issues/">View all issues</a></li>
 </ul>
 </p>
 {% else %}

@@ -20,7 +20,7 @@
     <form action="{{idiot_app_path}}issue/{{ issue.seq }}/update" method="POST">
       {% import 'issue_update_form.html' as issue_form with context %}
       {{ issue_form }}
-			<input type="submit" value="Update Issue" />
+			<a class="button" href="javascript:void();" onclick="parentNode.submit()">Update Issue</a>
     </form>
   </div>
 

@@ -20,6 +20,7 @@ a:hover, a:focus {
 div#idiot_header {
 		background-color: #006dc9;
 		padding: 1em;
+		background-image: url('../images/head_bg.jpg');	
 }
 
 div#header {
@@ -28,6 +29,10 @@ div#header {
 		padding: 1em;
 		position: relative;
 		font-size: 1.2em;
+		background-image: url('../images/head_bg2.jpg');
+		border-top: 1px solid #003db9;
+		border-bottom: 1px solid #001d89;
+		text-shadow: #001da9 0px 2px 2px;
 }
 
 div#user_info {
@@ -116,17 +121,104 @@ ul#issue_details li {
 }
 
 p#issue_description {
-		background-color: #FCFCFC;
-		margin-bottom: 3em;
+		background-color: #EEEEEE;
+		font-family: bitstream vera sans mono, monaco, consolas, monospace;
+		font-size: 0.8em;
+		margin-left: 2em;
+		margin-bottom: 2em;
 		padding: 2em;
+		-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;		
+		border: 1px solid #E0E0EA;
 }
 
 div.comment {
 		font-size: 90%;
 		margin-left: 2em;
 		margin-bottom: 2em;
+		padding: 1.5em;
+		background-color: #EEEEEE;
+		-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;	
+		border: 1px solid #E0E0EA;
 }
 
 div.comment_head {
 		font-weight: bold;
+}
+
+div.comment_body {
+		margin-top: 1em;
+		font-family: bitstream vera sans mono, monaco, consolas, monospace;
+		font-size: 0.8em;
+}
+
+a.button, a.button:active, a.button:visited, a.button:focus, a.button:hover {
+		-webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;	
+		background-color: #003dc9;
+		background-image: url('../images/head_bg_small.png');
+		color: #FFFFFF;
+		font-weight: bold;
+		text-shadow: #001d79 -1px -1px 2px;
+		padding: 0.5em;
+		padding-top: 0.35em;
+		padding-bottom: 0.35em;
+}
+
+ul.action_list {
+		list-style: none;
+		padding-left: 0;
+		margin-top: 2em;
+}
+
+ul.action_list li {
+		display: inline;
+		margin-right: 1em;
+}
+
+div#project_description {
+		font-size: 90%;
+		margin-left: 2em;
+		margin-bottom: 2em;
+		padding: 1.5em;
+		background-color: #EEEEEE;
+		-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+		font-family: bitstream vera sans mono, monaco, consolas, monospace;
+		font-size: 0.8em;
+		border: 1px solid #E0E0EA;
+}
+
+div.comment_block {
+		margin-top: 2.5em;
+}
+
+table.issue_table {
+		background-color: #EEEEEE;
+		-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+		font-family: bitstream vera sans mono, monaco, consolas, monospace;
+		font-size: 0.8em;
+		border: 1px solid #E0E0EA;
+		padding: 1.5em;
+		margin-left: 2em;
+		margin-bottom: 2em;
+}
+
+table.issue_table td {
+		padding: .5em;
+		border-collapse: collapse;
+		padding-right: 1.5em;
+}
+
+tr.issue_table_head td {
+		font-weight: bold;
+		border-bottom: 1px dotted #C0C0CA;
+		
 }

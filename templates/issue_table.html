@@ -1,0 +1,26 @@
+{%- macro issue_table(issues, with_links=True) -%}
+
+<table class="issue_table">
+<tr class="issue_table_head">
+	<td>Issue</td>
+	<td>Type</td>
+	<td>Status</td>
+	<td>Severity</td>
+</tr>
+
+  {% for issue in issues %}
+	  {{ issue_row(issue, with_link=with_links) }}
+	{% endfor %}
+
+</table>
+
+{%- endmacro %}
+
+{%- macro issue_row(issue, with_link=True) -%}
+<tr>
+  <td>{% if with_link %}<a href="{{ idiot_app_path }}issue/{{ issue.seq }}">{{ issue.summary }}</a>{% else %}{{ issue.summary }}{% endif %}</td>
+	<td>{{ issue.type|capitalize }}</td>
+	<td>{{ issue.status|capitalize }}</td>
+	<td>{{ issue.severity|capitalize }}</td>
+</tr>
+{%- endmacro %}

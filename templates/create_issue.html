@@ -24,13 +24,13 @@ Create an Issue
 
   <div id="issue_form">
     {% if project is defined %}
-    <form action="{{idiot_app_path}}project/{{project.name}}/issues/create" method="POST">
+    <form action="{{idiot_app_path}}project/{{project.name}}/issue/create" method="POST">
     {% else %}
-    <form action="{{idiot_app_path}}issues/create" method="POST">
+    <form action="{{idiot_app_path}}issue/create" method="POST">
     {% endif %}
       {% import 'issue_form.html' as issue_form with context %}
       {{ issue_form }}
-			<input type="submit" value="Create Issue" />
+			<a class="button" href="javascript:void();" onclick="parentNode.submit()">Create Issue</a>
     </form>
   </div>
 

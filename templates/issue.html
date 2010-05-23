@@ -7,47 +7,59 @@ Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_na
 {% block title_crumbs %} - Issue {{issue.seq}}: {{issue.summary}}{% endblock %}
 
 {% block content %}
-{% if not error %}
-<h2>Issue {{ issue.seq }}: {{ issue.summary }}</h2>
-{% if write_allowed %}
-<p>
-  <a href="{{idiot_app_path}}issue/{{ issue.seq }}/update">Update Issue</a>
-</p>
-{% endif %}
+		{% if not error %}
+				<h2>Issue {{ issue.seq }}: {{ issue.summary }}</h2>
 
-<ul id="issue_details">
-<li>Owner: <a href="{{ idiot_app_path }}user/{{ author.username }}">{{ author.full_name }}</a></li>
-<li>Type: <b>{{ issue.type|capitalize }}</b></li>
-<li>Severity: <b>{{ issue.severity|capitalize }}</b></li>
-<li>Status: <b>{{ issue.status|capitalize }}</b></li>
-</ul>
+				<ul id="issue_details">
+				<li>Owner: <a href="{{ idiot_app_path }}user/{{ author.username }}">{{ author.full_name }}</a></li>
+				<li>Type: <b>{{ issue.type|capitalize }}</b></li>
+				<li>Severity: <b>{{ issue.severity|capitalize }}</b></li>
+				<li>Status: <b>{{ issue.status|capitalize }}</b></li>
+				</ul>
 
-<p id="issue_description">{{issue.description}}</p>
+				<p id="issue_description">{{issue.description}}</p>
 
-{% if comments|count > 1 %}
-
-<h3>Comments</h3>
-
-{% for comment in comments %}
-  <div class="comment">
-    <div class="comment_head"><a href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on {{ comment.timestamp }}</div>
-  {{ comment.comment }}
-  </div>
-{% endfor %}
-
-{% endif %}
-
-<p>
-				{% if last_project and last_issue_page %}
-				<a href="{{idiot_app_path}}project/{{project.name}}/issues/page/{{last_issue_page}}">Back to Issue List</a>
-				{% else %}
-				<a href="{{idiot_app_path}}project/{{project.name}}/issues">Back to Issue List</a>
+				{% if write_allowed %}
+						<p>
+							<a class="button" href="{{idiot_app_path}}issue/{{ issue.seq }}/update">Update Issue</a>
+						</p>
 				{% endif %}
-</p>
 
-{% else %}
+				{% if comments|count > 1 %}
 
-<h2>Error</h2>
-<p>{{error}}</p>
-{% endif %}
+						<div class="comment_block">
+								<h3>Comments</h3>
+
+								{% import 'comment_single.html' as comment_single with context %}
+
+								{% for comment in comments %}
+										{{ comment_single.make_comment(comment) }}
+								{% endfor %}
+						</div>
+
+				{% endif %}
+
+				{% if logged %}
+
+						<p id="comment_form">
+
+
+
+						</p>
+
+				{% endif %}
+
+				<p>
+								{% if last_project and last_issue_page %}
+										<a class="button" href="{{idiot_app_path}}project/{{project.name}}/issues/page/{{last_issue_page}}">Back to Issue List</a>
+								{% else %}
+										<a class="button" href="{{idiot_app_path}}project/{{project.name}}/issues">Back to Issue List</a>
+								{% endif %}
+				</p>
+
+		{% else %}
+
+				<h2>Error</h2>
+				<p>{{error}}</p>
+		{% endif %}
 {% endblock %}

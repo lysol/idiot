@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block header %}
+Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
+{% endblock %}
+
+{% block title_crumbs %} - Comment {{ comments[0].seq }} and replies{% endblock %}
+
+{% block content %}
+{% if not error %}
+
+<h2>Comment #{{ comments[0].seq }} and replies</h2>
+
+{% for comment in comments %}
+  <div class="comment">
+    <div class="comment_head"><a href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on {{ comment.timestamp|datetimeformat }}</div>
+  {{ comment.comment }}
+  </div>
+{% endfor %}
+
+{% else %}
+
+<h2>Error</h2>
+<p>{{error}}</p>
+{% endif %}
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% import 'issue_table.html' as issue_table with context %}
 
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
@@ -10,11 +11,7 @@ Owner: <a href="{{idiot_app_path}}user/{{owner.username}}">{{owner.full_name}}</
 {% if not error %}
 <h2>Viewing Issues</h2>
 
-<ul id="issue_list">
-  {% for issue in issues %}
-	  <li>{{issue.seq}}: <a href="{{idiot_app_path}}issue/{{issue.seq}}/">{{issue.summary}}</a></li>
-	{% endfor %}
-</ul>
+{{ issue_table.issue_table(issues, with_links=True) }}
 
 <p id="page_nav">
   {% if prev_page_url %}
@@ -26,7 +23,7 @@ Owner: <a href="{{idiot_app_path}}user/{{owner.username}}">{{owner.full_name}}</
 </p>
 
 <p>
-<a href="{{idiot_app_path}}project/{{project.name}}">{{project.full_name}} Project Page</a>
+<a class="button" href="{{idiot_app_path}}project/{{project.name}}">Back to Project Page</a>
 </p>
 
 {% else %}

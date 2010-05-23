@@ -16,12 +16,14 @@ urls = (
     '/project/(\w+)/?', 'IProject',
     '/project/(\w+)/issues/?', 'IProjectIssues',
     '/project/(\w+)/issues/page/(\d+)/?', 'IProjectIssues',
-    '/project/(\w+)/issues/create/?', 'ICreateIssue',
+    '/project/(\w+)/issue/create/?', 'ICreateIssue',
     '/issue/create/?', 'ICreateIssue',
     '/issue/(\d+)/update/?', 'IUpdateIssue',
     '/user/(\w+)/?', 'IUser',
     '/admin/?', 'IAdmin',
-	'/issue/(\d+)/?', 'IIssue'
+	'/issue/(\d+)/?', 'IIssue',
+    '/comment/(\d+)/?', 'IComment',
+    '/comment/?', 'IComment',
 )
 
 web.config.debug = False 
@@ -150,6 +152,39 @@ class IBrowse(WebModule):
         self.config['projects'] = results
         return render_template('browse.html', self.config)
 
+
+class IComment(WebModule):
+
+    form_vars = ['summary', 'description', 'severity',
+        'issue_type', 'issue_status']
+
+    def POST(self):
+        in_vars = self._get_vars(self.form_vars)
+        project = Issue.get(in_vars['seq'])[0].project
+
+        if self._project_allowed(project):
+            comment = Comment.create(in_vars['seq'], session.username,
+                in_vars['comment'])[0]
+            
+    def GET(self, comment_seq):
+        
+        comment_thread = [c for c in Comment.get_thread(comment_seq)]
+        for index, comment in enumerate(comment_thread):
+            author = User.get(comment.author)[0]
+            comment_thread[index].author = author
+        issue = Issue.get(comment_thread[0].issue_seq)[0]
+        project = Project.get(issue.project)[0]
+
+        if self._project_allowed(project.name):
+            self.config['comments'] = comment_thread
+            self.config['issue'] = issue
+            self.config['project'] = project
+            return render_template('comment.html', self.config)
+        else:
+            self.config['error'] = 'You do not have permission to view ' + \
+                'comments on this project.'
+            return render_template('error.html', self.config)
+            
 
 class IIssue(WebModule):
 
