@@ -1,4 +1,4 @@
-{%- macro issue_table(issues, with_links=True) -%}
+{%- macro issue_table(issues, with_links=True, prev_url=None, next_url=None) -%}
 
 <table class="issue_table">
 <tr class="issue_table_head">
@@ -6,6 +6,7 @@
 	<td>Type</td>
 	<td>Status</td>
 	<td>Severity</td>
+	<td>Date Added</td>
 </tr>
 
   {% for issue in issues %}
@@ -22,5 +23,6 @@
 	<td>{{ issue.type|capitalize }}</td>
 	<td>{{ issue.status|capitalize }}</td>
 	<td>{{ issue.severity|capitalize }}</td>
+	<td>{{ issue.created|datetimeformat('%Y-%m-%d') }}</td>
 </tr>
 {%- endmacro %}

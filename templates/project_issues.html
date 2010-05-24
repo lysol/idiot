@@ -4,7 +4,7 @@
 
 {% block header %}
 Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: <a href="{{idiot_app_path}}user/{{owner.username}}">{{owner.full_name}}</a>
+Owner: <a href="{{idiot_app_path}}user/{{project.owner.username}}">{{project.owner.full_name}}</a>
 {% endblock %}
 
 {% block content %}
@@ -15,10 +15,10 @@ Owner: <a href="{{idiot_app_path}}user/{{owner.username}}">{{owner.full_name}}</
 
 <p id="page_nav">
   {% if prev_page_url %}
-	  <a href="{{ prev_page_url }}">Newer Issues</a>
+	  <a class="button" href="{{ prev_page_url }}">&lt;&lt; Newer Issues</a>
   {% endif %}
 	{% if next_page_url %}
-	  <a href="{{ next_page_url }}">Older Issues</a>
+	  <a class="button" href="{{ next_page_url }}">Older Issues &gt;&gt;</a>
 	{% endif %}
 </p>
 

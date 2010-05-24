@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block header %}
-<b>{{ project.full_name }}</b>
+Project: <a href="{{idiot_app_path}}project/{{issue.project.name}}/">{{issue.project.full_name}}</a><br />
+Owner: <a href="{{idiot_app_path}}user/{{issue.project.owner.username}}">{{issue.project.owner.full_name}}</a>
 {% endblock %}
 
 {% block title_crumbs %} - Update an Issue{% endblock %}

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Started on 2010-05-09 10:01:31 CDT
+-- Started on 2010-05-24 17:35:24 CDT
 
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -12,11 +12,11 @@ SET client_min_messages = warning;
 SET escape_string_warning = off;
 
 --
--- TOC entry 1883 (class 1262 OID 130474)
+-- TOC entry 1890 (class 1262 OID 130474)
 -- Name: idiot; Type: DATABASE; Schema: -; Owner: idiot
 --
 
-CREATE DATABASE idiot WITH TEMPLATE = template0 ENCODING = 'UTF8' COLLATE = 'C' CTYPE = 'C';
+CREATE DATABASE idiot WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'C';
 
 
 ALTER DATABASE idiot OWNER TO idiot;
@@ -31,7 +31,7 @@ SET client_min_messages = warning;
 SET escape_string_warning = off;
 
 --
--- TOC entry 363 (class 2612 OID 16386)
+-- TOC entry 369 (class 2612 OID 16386)
 -- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: postgres
 --
 
@@ -41,7 +41,7 @@ CREATE PROCEDURAL LANGUAGE plpgsql;
 ALTER PROCEDURAL LANGUAGE plpgsql OWNER TO postgres;
 
 --
--- TOC entry 364 (class 2612 OID 130627)
+-- TOC entry 370 (class 2612 OID 130627)
 -- Name: plpythonu; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: postgres
 --
 
@@ -53,7 +53,7 @@ ALTER PROCEDURAL LANGUAGE plpythonu OWNER TO postgres;
 SET search_path = public, pg_catalog;
 
 --
--- TOC entry 360 (class 1247 OID 130887)
+-- TOC entry 365 (class 1247 OID 130887)
 -- Dependencies: 3
 -- Name: issue_status; Type: TYPE; Schema: public; Owner: postgres
 --
@@ -69,7 +69,7 @@ CREATE TYPE issue_status AS ENUM (
 ALTER TYPE public.issue_status OWNER TO postgres;
 
 --
--- TOC entry 358 (class 1247 OID 130882)
+-- TOC entry 363 (class 1247 OID 130882)
 -- Dependencies: 3
 -- Name: issue_type; Type: TYPE; Schema: public; Owner: postgres
 --
@@ -84,7 +84,7 @@ CREATE TYPE issue_type AS ENUM (
 ALTER TYPE public.issue_type OWNER TO postgres;
 
 --
--- TOC entry 356 (class 1247 OID 130877)
+-- TOC entry 361 (class 1247 OID 130877)
 -- Dependencies: 3
 -- Name: severity; Type: TYPE; Schema: public; Owner: postgres
 --
@@ -98,13 +98,38 @@ CREATE TYPE severity AS ENUM (
 
 ALTER TYPE public.severity OWNER TO postgres;
 
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
 --
--- TOC entry 50 (class 1255 OID 130920)
--- Dependencies: 364 3
+-- TOC entry 1558 (class 1259 OID 130477)
+-- Dependencies: 1844 1845 1846 1847 1848 1849 3 363 365 361
+-- Name: issue; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE issue (
+    seq integer NOT NULL,
+    project character varying DEFAULT ''::character varying NOT NULL,
+    summary character varying NOT NULL,
+    description character varying NOT NULL,
+    author character varying DEFAULT ''::character varying NOT NULL,
+    created timestamp with time zone DEFAULT now() NOT NULL,
+    severity severity DEFAULT 'normal'::severity NOT NULL,
+    type issue_type DEFAULT 'defect'::issue_type NOT NULL,
+    status issue_status DEFAULT 'open'::issue_status NOT NULL
+);
+
+
+ALTER TABLE public.issue OWNER TO postgres;
+
+--
+-- TOC entry 51 (class 1255 OID 138668)
+-- Dependencies: 370 3 343
 -- Name: create_issue(character varying, character varying, character varying, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION create_issue(project character varying, summary character varying, description character varying, author character varying, severity character varying, issue_type character varying) RETURNS void
+CREATE FUNCTION create_issue(project character varying, summary character varying, description character varying, author character varying, severity character varying, issue_type character varying) RETURNS SETOF issue
     LANGUAGE plpythonu
     AS $_$
 
@@ -113,10 +138,19 @@ plan = plpy.prepare("""
         project, summary, description, author, severity, "type"
     ) VALUES (
         $1, $2, $3, $4, $5, $6
-    );
-""", ["text", "text", "text", "text", "text", "text"])
+    )
+    RETURNING seq AS issue_seq
+    ;
+""", ["text", "text", "text", "text", "severity", "issue_type"])
 
-plpy.execute(plan, [project, summary, description, author, severity, issue_type])
+seq = plpy.execute(plan, [project, summary, description, author, severity, issue_type])[0]['issue_seq']
+
+plan = plpy.prepare("""
+    SELECT *
+    FROM issue
+    WHERE seq = $1
+""", ["int4"])
+return plpy.execute(plan,[seq])
 
 $_$;
 
@@ -125,7 +159,7 @@ ALTER FUNCTION public.create_issue(project character varying, summary character 
 
 --
 -- TOC entry 28 (class 1255 OID 130858)
--- Dependencies: 3 364
+-- Dependencies: 370 3
 -- Name: create_project(character varying, character varying, character varying, character varying, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -149,37 +183,41 @@ $_$;
 ALTER FUNCTION public.create_project(name character varying, full_name character varying, description character varying, owner character varying, public boolean) OWNER TO postgres;
 
 --
--- TOC entry 33 (class 1255 OID 130652)
--- Dependencies: 364 3
--- Name: create_thread(character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+-- TOC entry 57 (class 1255 OID 138691)
+-- Dependencies: 3 370
+-- Name: create_thread(integer, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION create_thread(project character varying, author character varying, comment character varying) RETURNS void
+CREATE FUNCTION create_thread(issue_seq integer, author character varying, comment character varying) RETURNS void
     LANGUAGE plpythonu
     AS $_$
 
 plan = plpy.prepare("""
     INSERT INTO comment (
-        author, comment, project
+        author, comment, issue_seq
     ) VALUES (
         $1, $2, $3
-    );
-""", ["text", "text", "text"])
+    ) RETURNING seq as comment_seq;
+""", ["text", "text", "int4"])
 
-plpy.execute(plan, [author, comment, project])
+seq = plpy.execute(plan, [author, comment, issue_seq])[0]['comment_seq']
+
+plan = plpy.prepare("""
+    SELECT *
+    FROM comment
+    WHERE seq = $1
+""", ["int4"])
+
+return plpy.execute(plan, [seq])
 
 $_$;
 
 
-ALTER FUNCTION public.create_thread(project character varying, author character varying, comment character varying) OWNER TO postgres;
-
-SET default_tablespace = '';
-
-SET default_with_oids = false;
+ALTER FUNCTION public.create_thread(issue_seq integer, author character varying, comment character varying) OWNER TO postgres;
 
 --
--- TOC entry 1554 (class 1259 OID 130492)
--- Dependencies: 1847 1848 1849 1850 1851 1852 1853 3
+-- TOC entry 1560 (class 1259 OID 130492)
+-- Dependencies: 1853 1854 1855 1856 1857 1858 1859 3
 -- Name: user; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -199,8 +237,8 @@ CREATE TABLE "user" (
 ALTER TABLE public."user" OWNER TO postgres;
 
 --
--- TOC entry 48 (class 1255 OID 130875)
--- Dependencies: 3 341 364
+-- TOC entry 46 (class 1255 OID 130875)
+-- Dependencies: 3 347 370
 -- Name: create_user(character varying, character varying, character varying, character varying, character varying, character varying, boolean, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -236,7 +274,7 @@ ALTER FUNCTION public.create_user(username character varying, full_name characte
 
 --
 -- TOC entry 25 (class 1255 OID 130654)
--- Dependencies: 3 364
+-- Dependencies: 3 370
 -- Name: delete_comment(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -258,7 +296,7 @@ ALTER FUNCTION public.delete_comment(seq integer) OWNER TO postgres;
 
 --
 -- TOC entry 29 (class 1255 OID 130640)
--- Dependencies: 3 364
+-- Dependencies: 3 370
 -- Name: delete_permission(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -280,7 +318,7 @@ ALTER FUNCTION public.delete_permission(seq integer) OWNER TO postgres;
 
 --
 -- TOC entry 21 (class 1255 OID 130635)
--- Dependencies: 3 364
+-- Dependencies: 370 3
 -- Name: delete_project(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -302,7 +340,7 @@ ALTER FUNCTION public.delete_project(name character varying) OWNER TO postgres;
 
 --
 -- TOC entry 32 (class 1255 OID 130641)
--- Dependencies: 364 3
+-- Dependencies: 3 370
 -- Name: delete_user(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -323,8 +361,8 @@ $_$;
 ALTER FUNCTION public.delete_user(username character varying) OWNER TO postgres;
 
 --
--- TOC entry 1558 (class 1259 OID 130584)
--- Dependencies: 1858 1859 3
+-- TOC entry 1564 (class 1259 OID 130584)
+-- Dependencies: 1864 1865 3
 -- Name: comment; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -333,7 +371,7 @@ CREATE TABLE comment (
     author character varying DEFAULT ''::character varying NOT NULL,
     comment character varying NOT NULL,
     "timestamp" timestamp with time zone DEFAULT now() NOT NULL,
-    project character varying NOT NULL,
+    issue_seq integer NOT NULL,
     parent_seq integer
 );
 
@@ -342,7 +380,7 @@ ALTER TABLE public.comment OWNER TO postgres;
 
 --
 -- TOC entry 30 (class 1255 OID 130658)
--- Dependencies: 364 349 3
+-- Dependencies: 3 370 355
 -- Name: get_all_comments(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -359,7 +397,7 @@ ALTER FUNCTION public.get_all_comments() OWNER TO postgres;
 
 --
 -- TOC entry 31 (class 1255 OID 130659)
--- Dependencies: 3 364 349
+-- Dependencies: 3 370 355
 -- Name: get_comment(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -380,8 +418,73 @@ $_$;
 ALTER FUNCTION public.get_comment(seq integer) OWNER TO postgres;
 
 --
--- TOC entry 1553 (class 1259 OID 130485)
--- Dependencies: 1844 1845 1846 3
+-- TOC entry 52 (class 1255 OID 138669)
+-- Dependencies: 3 370
+-- Name: get_issue_statuses(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION get_issue_statuses() RETURNS SETOF character varying
+    LANGUAGE plpythonu STABLE
+    AS $$
+result = plpy.execute("""
+SELECT pg_enum.enumlabel::varchar
+FROM pg_enum
+JOIN pg_type ON pg_type.typname = 'issue_status'
+AND pg_type.oid = pg_enum.enumtypid
+""")
+
+return [row['enumlabel'] for row in result]
+$$;
+
+
+ALTER FUNCTION public.get_issue_statuses() OWNER TO postgres;
+
+--
+-- TOC entry 58 (class 1255 OID 138693)
+-- Dependencies: 3 355 370
+-- Name: get_issue_threads(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION get_issue_threads(issue_seq integer) RETURNS SETOF comment
+    LANGUAGE plpythonu STABLE
+    AS $_$
+
+plan = plpy.prepare("""
+        SELECT * FROM comment WHERE issue_seq = $1
+""", ["int4"])
+
+return plpy.execute(plan, [issue_seq])
+
+$_$;
+
+
+ALTER FUNCTION public.get_issue_threads(issue_seq integer) OWNER TO postgres;
+
+--
+-- TOC entry 54 (class 1255 OID 138667)
+-- Dependencies: 370 3
+-- Name: get_issue_types(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION get_issue_types() RETURNS SETOF character varying
+    LANGUAGE plpythonu STABLE
+    AS $$
+result = plpy.execute("""
+SELECT pg_enum.enumlabel::varchar
+FROM pg_enum
+JOIN pg_type ON pg_type.typname = 'issue_type'
+AND pg_type.oid = pg_enum.enumtypid
+""")
+
+return [row['enumlabel'] for row in result]
+$$;
+
+
+ALTER FUNCTION public.get_issue_types() OWNER TO postgres;
+
+--
+-- TOC entry 1559 (class 1259 OID 130485)
+-- Dependencies: 1850 1851 1852 3
 -- Name: project; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -399,7 +502,7 @@ ALTER TABLE public.project OWNER TO postgres;
 
 --
 -- TOC entry 23 (class 1255 OID 130616)
--- Dependencies: 3 339 363
+-- Dependencies: 345 369 3
 -- Name: get_project(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -423,29 +526,8 @@ $$;
 ALTER FUNCTION public.get_project(project_name character varying) OWNER TO postgres;
 
 --
--- TOC entry 1552 (class 1259 OID 130477)
--- Dependencies: 1838 1839 1840 1841 1842 1843 360 3 358 356
--- Name: issue; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE issue (
-    seq integer NOT NULL,
-    project character varying DEFAULT ''::character varying NOT NULL,
-    summary character varying NOT NULL,
-    description character varying NOT NULL,
-    author character varying DEFAULT ''::character varying NOT NULL,
-    created timestamp with time zone DEFAULT now() NOT NULL,
-    severity severity DEFAULT 'normal'::severity NOT NULL,
-    type issue_type DEFAULT 'defect'::issue_type NOT NULL,
-    status issue_status DEFAULT 'open'::issue_status NOT NULL
-);
-
-
-ALTER TABLE public.issue OWNER TO postgres;
-
---
--- TOC entry 52 (class 1255 OID 130637)
--- Dependencies: 337 364 3
+-- TOC entry 49 (class 1255 OID 130637)
+-- Dependencies: 343 370 3
 -- Name: get_project_issue_page(character varying, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -490,7 +572,7 @@ ALTER FUNCTION public.get_project_issue_page(name character varying, page intege
 
 --
 -- TOC entry 24 (class 1255 OID 130636)
--- Dependencies: 3 364 337
+-- Dependencies: 3 370 343
 -- Name: get_project_issues(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -515,8 +597,8 @@ $_$;
 ALTER FUNCTION public.get_project_issues(name character varying) OWNER TO postgres;
 
 --
--- TOC entry 47 (class 1255 OID 130871)
--- Dependencies: 3 364
+-- TOC entry 45 (class 1255 OID 130871)
+-- Dependencies: 3 370
 -- Name: get_project_max_issue_page(character varying, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -543,7 +625,7 @@ ALTER FUNCTION public.get_project_max_issue_page(name character varying, per_pag
 
 --
 -- TOC entry 22 (class 1255 OID 130615)
--- Dependencies: 363 339 3
+-- Dependencies: 345 3 369
 -- Name: get_projects(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -565,8 +647,8 @@ $$;
 ALTER FUNCTION public.get_projects() OWNER TO postgres;
 
 --
--- TOC entry 39 (class 1255 OID 130851)
--- Dependencies: 363 3 339
+-- TOC entry 38 (class 1255 OID 130851)
+-- Dependencies: 369 3 345
 -- Name: get_projects(boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -592,8 +674,8 @@ $_$;
 ALTER FUNCTION public.get_projects(public_only boolean) OWNER TO postgres;
 
 --
--- TOC entry 38 (class 1255 OID 130850)
--- Dependencies: 364 3 339
+-- TOC entry 37 (class 1255 OID 130850)
+-- Dependencies: 345 370 3
 -- Name: get_public_project_page(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -635,8 +717,30 @@ $_$;
 ALTER FUNCTION public.get_public_project_page(page integer, per_page integer) OWNER TO postgres;
 
 --
--- TOC entry 35 (class 1255 OID 130661)
--- Dependencies: 349 364 3
+-- TOC entry 53 (class 1255 OID 138666)
+-- Dependencies: 370 3
+-- Name: get_severities(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION get_severities() RETURNS SETOF character varying
+    LANGUAGE plpythonu STABLE
+    AS $$
+result = plpy.execute("""
+SELECT pg_enum.enumlabel::varchar
+FROM pg_enum
+JOIN pg_type ON pg_type.typname = 'severity'
+AND pg_type.oid = pg_enum.enumtypid
+""")
+
+return [row['enumlabel'] for row in result]
+$$;
+
+
+ALTER FUNCTION public.get_severities() OWNER TO postgres;
+
+--
+-- TOC entry 34 (class 1255 OID 130661)
+-- Dependencies: 3 370 355
 -- Name: get_thread(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -667,8 +771,8 @@ $_$;
 ALTER FUNCTION public.get_thread(seq integer) OWNER TO postgres;
 
 --
--- TOC entry 46 (class 1255 OID 130868)
--- Dependencies: 341 3 363
+-- TOC entry 44 (class 1255 OID 130868)
+-- Dependencies: 347 3 369
 -- Name: get_user(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -692,8 +796,8 @@ $$;
 ALTER FUNCTION public.get_user(in_username character varying) OWNER TO postgres;
 
 --
--- TOC entry 43 (class 1255 OID 130847)
--- Dependencies: 364 339 3
+-- TOC entry 42 (class 1255 OID 130847)
+-- Dependencies: 345 3 370
 -- Name: get_user_project_page(integer, integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -745,8 +849,40 @@ $_$;
 ALTER FUNCTION public.get_user_project_page(page integer, per_page integer, username character varying) OWNER TO postgres;
 
 --
--- TOC entry 45 (class 1255 OID 130916)
--- Dependencies: 349 3 364
+-- TOC entry 50 (class 1255 OID 138665)
+-- Dependencies: 3 345 370
+-- Name: get_user_projects(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION get_user_projects(username character varying) RETURNS SETOF project
+    LANGUAGE plpythonu STABLE
+    AS $_$
+
+plan = plpy.prepare("""
+    SELECT *
+    FROM project
+    WHERE owner = $1
+    OR name IN (SELECT project FROM permission
+        WHERE username = $1)
+    OR (SELECT "user"."admin" FROM "user"
+        WHERE username = $1)
+    OR "public" IS TRUE
+    """, ["text"])
+result = plpy.execute(plan, [username])
+
+if len(result) == 0:
+    return []
+return result
+    
+
+$_$;
+
+
+ALTER FUNCTION public.get_user_projects(username character varying) OWNER TO postgres;
+
+--
+-- TOC entry 48 (class 1255 OID 130916)
+-- Dependencies: 3 355 370
 -- Name: get_user_recent_comments(character varying, character varying, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -754,14 +890,11 @@ CREATE FUNCTION get_user_recent_comments(viewed_user character varying, viewing_
     LANGUAGE plpythonu STABLE
     AS $_$
 plan = plpy.prepare("""
-    SELECT *
+    SELECT comment.*
     FROM comment
-    WHERE project IN (
-        SELECT name
-        FROM project
-        WHERE has_project_access(name, $1)
-    )
-    AND author = $2
+    JOIN issue ON comment.issue_seq = issue.seq
+    WHERE has_project_access(issue.project, $1)
+    AND comment.author = $2
     ORDER BY timestamp DESC
     LIMIT $3
 """, ["text", "text", "int4"])
@@ -773,8 +906,8 @@ $_$;
 ALTER FUNCTION public.get_user_recent_comments(viewed_user character varying, viewing_user character varying, count integer) OWNER TO postgres;
 
 --
--- TOC entry 49 (class 1255 OID 130918)
--- Dependencies: 3 337 364
+-- TOC entry 47 (class 1255 OID 130918)
+-- Dependencies: 343 370 3
 -- Name: get_user_recent_issues(character varying, character varying, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -801,8 +934,33 @@ $_$;
 ALTER FUNCTION public.get_user_recent_issues(viewed_user character varying, viewing_user character varying, count integer) OWNER TO postgres;
 
 --
--- TOC entry 42 (class 1255 OID 130853)
--- Dependencies: 363 3
+-- TOC entry 55 (class 1255 OID 138670)
+-- Dependencies: 369 3
+-- Name: has_issue_write_access(integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION has_issue_write_access(issue_seq integer, username character varying) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $_$
+BEGIN
+RETURN $2 IN (
+    SELECT author
+    FROM issue
+    WHERE seq = $1
+) OR (
+    SELECT admin
+    FROM "user"
+    WHERE username = $2
+) as access;
+END;
+$_$;
+
+
+ALTER FUNCTION public.has_issue_write_access(issue_seq integer, username character varying) OWNER TO postgres;
+
+--
+-- TOC entry 41 (class 1255 OID 130853)
+-- Dependencies: 369 3
 -- Name: has_project_access(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -827,8 +985,8 @@ $_$;
 ALTER FUNCTION public.has_project_access(project_name character varying, username character varying) OWNER TO postgres;
 
 --
--- TOC entry 34 (class 1255 OID 130653)
--- Dependencies: 364 3
+-- TOC entry 33 (class 1255 OID 130653)
+-- Dependencies: 3 370
 -- Name: modify_comment(integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -850,8 +1008,8 @@ $_$;
 ALTER FUNCTION public.modify_comment(seq integer, comment character varying) OWNER TO postgres;
 
 --
--- TOC entry 51 (class 1255 OID 130921)
--- Dependencies: 3 364
+-- TOC entry 56 (class 1255 OID 130921)
+-- Dependencies: 370 3
 -- Name: modify_issue(integer, character varying, character varying, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -867,7 +1025,7 @@ plan = plpy.prepare("""
     type = $5,
     status = $6
     WHERE seq = $3
-""", ["text", "text", "int4", "text", "text", "text"])
+""", ["text", "text", "int4", "severity", "issue_type", "issue_status"])
 
 plpy.execute(plan, [summary, description, seq, severity, issue_type, status])
 
@@ -878,7 +1036,7 @@ ALTER FUNCTION public.modify_issue(seq integer, summary character varying, descr
 
 --
 -- TOC entry 20 (class 1255 OID 130639)
--- Dependencies: 3 364
+-- Dependencies: 370 3
 -- Name: modify_permission(character varying, character varying, boolean, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -923,8 +1081,8 @@ $_$;
 ALTER FUNCTION public.modify_permission(project character varying, username character varying, post_issues boolean, post_comments boolean) OWNER TO postgres;
 
 --
--- TOC entry 44 (class 1255 OID 130859)
--- Dependencies: 364 3
+-- TOC entry 43 (class 1255 OID 130859)
+-- Dependencies: 370 3
 -- Name: modify_project(character varying, character varying, character varying, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -947,7 +1105,7 @@ ALTER FUNCTION public.modify_project(name character varying, full_name character
 
 --
 -- TOC entry 19 (class 1255 OID 130629)
--- Dependencies: 364 3
+-- Dependencies: 370 3
 -- Name: modify_user(character varying, character varying, character varying, character varying, character varying, character varying, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -975,8 +1133,8 @@ $_$;
 ALTER FUNCTION public.modify_user(username character varying, full_name character varying, email character varying, password character varying, password_again character varying, website character varying, admin boolean) OWNER TO postgres;
 
 --
--- TOC entry 36 (class 1255 OID 130663)
--- Dependencies: 3 364
+-- TOC entry 35 (class 1255 OID 130663)
+-- Dependencies: 3 370
 -- Name: modify_user(integer, character varying, character varying, character varying, character varying, character varying, character varying, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1020,8 +1178,8 @@ $_$;
 ALTER FUNCTION public.modify_user(seq integer, username character varying, full_name character varying, email character varying, password character varying, password_again character varying, website character varying, admin boolean) OWNER TO postgres;
 
 --
--- TOC entry 37 (class 1255 OID 130855)
--- Dependencies: 363 3
+-- TOC entry 36 (class 1255 OID 130855)
+-- Dependencies: 3 369
 -- Name: project_is_public(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1042,7 +1200,7 @@ ALTER FUNCTION public.project_is_public(project_name character varying) OWNER TO
 
 --
 -- TOC entry 26 (class 1255 OID 130655)
--- Dependencies: 364 3
+-- Dependencies: 3 370
 -- Name: reply_comment(integer, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1070,7 +1228,7 @@ ALTER FUNCTION public.reply_comment(seq integer, author character varying, comme
 
 --
 -- TOC entry 27 (class 1255 OID 130656)
--- Dependencies: 3 364
+-- Dependencies: 3 370
 -- Name: tr_no_cross_project_comments(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1097,8 +1255,8 @@ $_$;
 ALTER FUNCTION public.tr_no_cross_project_comments() OWNER TO postgres;
 
 --
--- TOC entry 40 (class 1255 OID 130856)
--- Dependencies: 363 3
+-- TOC entry 39 (class 1255 OID 130856)
+-- Dependencies: 369 3
 -- Name: user_login(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1118,8 +1276,8 @@ $$;
 ALTER FUNCTION public.user_login(login_username character varying, login_password character varying) OWNER TO postgres;
 
 --
--- TOC entry 41 (class 1255 OID 130857)
--- Dependencies: 363 3
+-- TOC entry 40 (class 1255 OID 130857)
+-- Dependencies: 3 369
 -- Name: user_verify(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1139,8 +1297,8 @@ $$;
 ALTER FUNCTION public.user_verify(login_username character varying, md5_password character varying) OWNER TO postgres;
 
 --
--- TOC entry 1557 (class 1259 OID 130582)
--- Dependencies: 3 1558
+-- TOC entry 1563 (class 1259 OID 130582)
+-- Dependencies: 3 1564
 -- Name: comment_seq_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1155,8 +1313,8 @@ CREATE SEQUENCE comment_seq_seq
 ALTER TABLE public.comment_seq_seq OWNER TO postgres;
 
 --
--- TOC entry 1898 (class 0 OID 0)
--- Dependencies: 1557
+-- TOC entry 1905 (class 0 OID 0)
+-- Dependencies: 1563
 -- Name: comment_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1164,7 +1322,7 @@ ALTER SEQUENCE comment_seq_seq OWNED BY comment.seq;
 
 
 --
--- TOC entry 1559 (class 1259 OID 130601)
+-- TOC entry 1565 (class 1259 OID 130601)
 -- Dependencies: 3
 -- Name: exceptions; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
@@ -1179,8 +1337,8 @@ CREATE TABLE exceptions (
 ALTER TABLE public.exceptions OWNER TO postgres;
 
 --
--- TOC entry 1551 (class 1259 OID 130475)
--- Dependencies: 1552 3
+-- TOC entry 1557 (class 1259 OID 130475)
+-- Dependencies: 1558 3
 -- Name: issue_seq_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1195,8 +1353,8 @@ CREATE SEQUENCE issue_seq_seq
 ALTER TABLE public.issue_seq_seq OWNER TO postgres;
 
 --
--- TOC entry 1901 (class 0 OID 0)
--- Dependencies: 1551
+-- TOC entry 1908 (class 0 OID 0)
+-- Dependencies: 1557
 -- Name: issue_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1204,8 +1362,8 @@ ALTER SEQUENCE issue_seq_seq OWNED BY issue.seq;
 
 
 --
--- TOC entry 1556 (class 1259 OID 130503)
--- Dependencies: 1855 1856 3
+-- TOC entry 1562 (class 1259 OID 130503)
+-- Dependencies: 1861 1862 3
 -- Name: permission; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1221,8 +1379,8 @@ CREATE TABLE permission (
 ALTER TABLE public.permission OWNER TO postgres;
 
 --
--- TOC entry 1555 (class 1259 OID 130501)
--- Dependencies: 1556 3
+-- TOC entry 1561 (class 1259 OID 130501)
+-- Dependencies: 3 1562
 -- Name: permission_seq_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1237,8 +1395,8 @@ CREATE SEQUENCE permission_seq_seq
 ALTER TABLE public.permission_seq_seq OWNER TO postgres;
 
 --
--- TOC entry 1904 (class 0 OID 0)
--- Dependencies: 1555
+-- TOC entry 1911 (class 0 OID 0)
+-- Dependencies: 1561
 -- Name: permission_seq_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1246,8 +1404,8 @@ ALTER SEQUENCE permission_seq_seq OWNED BY permission.seq;
 
 
 --
--- TOC entry 1857 (class 2604 OID 130587)
--- Dependencies: 1558 1557 1558
+-- TOC entry 1863 (class 2604 OID 130587)
+-- Dependencies: 1563 1564 1564
 -- Name: seq; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1255,8 +1413,8 @@ ALTER TABLE comment ALTER COLUMN seq SET DEFAULT nextval('comment_seq_seq'::regc
 
 
 --
--- TOC entry 1837 (class 2604 OID 130480)
--- Dependencies: 1551 1552 1552
+-- TOC entry 1843 (class 2604 OID 130480)
+-- Dependencies: 1558 1557 1558
 -- Name: seq; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1264,8 +1422,8 @@ ALTER TABLE issue ALTER COLUMN seq SET DEFAULT nextval('issue_seq_seq'::regclass
 
 
 --
--- TOC entry 1854 (class 2604 OID 130506)
--- Dependencies: 1556 1555 1556
+-- TOC entry 1860 (class 2604 OID 130506)
+-- Dependencies: 1562 1561 1562
 -- Name: seq; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1273,8 +1431,8 @@ ALTER TABLE permission ALTER COLUMN seq SET DEFAULT nextval('permission_seq_seq'
 
 
 --
--- TOC entry 1871 (class 2606 OID 130593)
--- Dependencies: 1558 1558
+-- TOC entry 1877 (class 2606 OID 130593)
+-- Dependencies: 1564 1564
 -- Name: comment_seq_primary_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1283,8 +1441,8 @@ ALTER TABLE ONLY comment
 
 
 --
--- TOC entry 1873 (class 2606 OID 130608)
--- Dependencies: 1559 1559
+-- TOC entry 1880 (class 2606 OID 130608)
+-- Dependencies: 1565 1565
 -- Name: exceptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1293,8 +1451,8 @@ ALTER TABLE ONLY exceptions
 
 
 --
--- TOC entry 1861 (class 2606 OID 130558)
--- Dependencies: 1552 1552
+-- TOC entry 1867 (class 2606 OID 130558)
+-- Dependencies: 1558 1558
 -- Name: issue_seq_primary_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1303,8 +1461,8 @@ ALTER TABLE ONLY issue
 
 
 --
--- TOC entry 1863 (class 2606 OID 130517)
--- Dependencies: 1553 1553
+-- TOC entry 1869 (class 2606 OID 130517)
+-- Dependencies: 1559 1559
 -- Name: project_name_primary_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1313,8 +1471,8 @@ ALTER TABLE ONLY project
 
 
 --
--- TOC entry 1867 (class 2606 OID 130515)
--- Dependencies: 1556 1556 1556
+-- TOC entry 1873 (class 2606 OID 130515)
+-- Dependencies: 1562 1562 1562
 -- Name: project_user_permission_unique; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1323,8 +1481,8 @@ ALTER TABLE ONLY permission
 
 
 --
--- TOC entry 1869 (class 2606 OID 130513)
--- Dependencies: 1556 1556
+-- TOC entry 1875 (class 2606 OID 130513)
+-- Dependencies: 1562 1562
 -- Name: seq_primary_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1333,8 +1491,8 @@ ALTER TABLE ONLY permission
 
 
 --
--- TOC entry 1865 (class 2606 OID 130547)
--- Dependencies: 1554 1554
+-- TOC entry 1871 (class 2606 OID 130547)
+-- Dependencies: 1560 1560
 -- Name: username_primary_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -1343,8 +1501,17 @@ ALTER TABLE ONLY "user"
 
 
 --
--- TOC entry 1874 (class 2606 OID 130559)
--- Dependencies: 1554 1864 1552
+-- TOC entry 1878 (class 1259 OID 138689)
+-- Dependencies: 1564
+-- Name: fki_comment_issue_seq_fk; Type: INDEX; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE INDEX fki_comment_issue_seq_fk ON comment USING btree (issue_seq);
+
+
+--
+-- TOC entry 1881 (class 2606 OID 130559)
+-- Dependencies: 1870 1560 1558
 -- Name: author_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1353,8 +1520,8 @@ ALTER TABLE ONLY issue
 
 
 --
--- TOC entry 1877 (class 2606 OID 130594)
--- Dependencies: 1864 1558 1554
+-- TOC entry 1884 (class 2606 OID 130594)
+-- Dependencies: 1870 1560 1564
 -- Name: comment_author_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1363,8 +1530,18 @@ ALTER TABLE ONLY comment
 
 
 --
--- TOC entry 1879 (class 2606 OID 130647)
--- Dependencies: 1870 1558 1558
+-- TOC entry 1886 (class 2606 OID 138684)
+-- Dependencies: 1866 1558 1564
+-- Name: comment_issue_seq_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY comment
+    ADD CONSTRAINT comment_issue_seq_fk FOREIGN KEY (issue_seq) REFERENCES issue(seq) ON UPDATE RESTRICT ON DELETE SET DEFAULT;
+
+
+--
+-- TOC entry 1885 (class 2606 OID 130647)
+-- Dependencies: 1876 1564 1564
 -- Name: comment_parent_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1373,8 +1550,8 @@ ALTER TABLE ONLY comment
 
 
 --
--- TOC entry 1880 (class 2606 OID 130609)
--- Dependencies: 1559 1559 1872
+-- TOC entry 1887 (class 2606 OID 130609)
+-- Dependencies: 1879 1565 1565
 -- Name: exceptions_parent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1383,18 +1560,8 @@ ALTER TABLE ONLY exceptions
 
 
 --
--- TOC entry 1878 (class 2606 OID 130642)
--- Dependencies: 1558 1553 1862
--- Name: project_comment_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY comment
-    ADD CONSTRAINT project_comment_fk FOREIGN KEY (project) REFERENCES project(name) ON UPDATE RESTRICT ON DELETE CASCADE;
-
-
---
--- TOC entry 1875 (class 2606 OID 130564)
--- Dependencies: 1862 1553 1552
+-- TOC entry 1882 (class 2606 OID 130564)
+-- Dependencies: 1558 1559 1868
 -- Name: project_issue_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1403,8 +1570,8 @@ ALTER TABLE ONLY issue
 
 
 --
--- TOC entry 1876 (class 2606 OID 130569)
--- Dependencies: 1553 1864 1554
+-- TOC entry 1883 (class 2606 OID 130569)
+-- Dependencies: 1559 1560 1870
 -- Name: project_owner_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1413,7 +1580,7 @@ ALTER TABLE ONLY project
 
 
 --
--- TOC entry 1885 (class 0 OID 0)
+-- TOC entry 1892 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -1425,8 +1592,20 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
--- TOC entry 1886 (class 0 OID 0)
--- Dependencies: 1554
+-- TOC entry 1893 (class 0 OID 0)
+-- Dependencies: 1558
+-- Name: issue; Type: ACL; Schema: public; Owner: postgres
+--
+
+REVOKE ALL ON TABLE issue FROM PUBLIC;
+REVOKE ALL ON TABLE issue FROM postgres;
+GRANT ALL ON TABLE issue TO postgres;
+GRANT ALL ON TABLE issue TO idiot_group;
+
+
+--
+-- TOC entry 1894 (class 0 OID 0)
+-- Dependencies: 1560
 -- Name: user; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1437,7 +1616,7 @@ GRANT ALL ON TABLE "user" TO idiot_group;
 
 
 --
--- TOC entry 1887 (class 0 OID 0)
+-- TOC entry 1895 (class 0 OID 0)
 -- Dependencies: 21
 -- Name: delete_project(character varying); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1450,7 +1629,7 @@ GRANT ALL ON FUNCTION delete_project(name character varying) TO idiot_group;
 
 
 --
--- TOC entry 1888 (class 0 OID 0)
+-- TOC entry 1896 (class 0 OID 0)
 -- Dependencies: 32
 -- Name: delete_user(character varying); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1463,8 +1642,8 @@ GRANT ALL ON FUNCTION delete_user(username character varying) TO idiot_group;
 
 
 --
--- TOC entry 1889 (class 0 OID 0)
--- Dependencies: 1558
+-- TOC entry 1897 (class 0 OID 0)
+-- Dependencies: 1564
 -- Name: comment; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1475,8 +1654,8 @@ GRANT ALL ON TABLE comment TO idiot_group;
 
 
 --
--- TOC entry 1890 (class 0 OID 0)
--- Dependencies: 1553
+-- TOC entry 1898 (class 0 OID 0)
+-- Dependencies: 1559
 -- Name: project; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1487,7 +1666,7 @@ GRANT ALL ON TABLE project TO idiot_group;
 
 
 --
--- TOC entry 1891 (class 0 OID 0)
+-- TOC entry 1899 (class 0 OID 0)
 -- Dependencies: 23
 -- Name: get_project(character varying); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1500,20 +1679,8 @@ GRANT ALL ON FUNCTION get_project(project_name character varying) TO idiot_group
 
 
 --
--- TOC entry 1892 (class 0 OID 0)
--- Dependencies: 1552
--- Name: issue; Type: ACL; Schema: public; Owner: postgres
---
-
-REVOKE ALL ON TABLE issue FROM PUBLIC;
-REVOKE ALL ON TABLE issue FROM postgres;
-GRANT ALL ON TABLE issue TO postgres;
-GRANT ALL ON TABLE issue TO idiot_group;
-
-
---
--- TOC entry 1893 (class 0 OID 0)
--- Dependencies: 52
+-- TOC entry 1900 (class 0 OID 0)
+-- Dependencies: 49
 -- Name: get_project_issue_page(character varying, integer, integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1525,7 +1692,7 @@ GRANT ALL ON FUNCTION get_project_issue_page(name character varying, page intege
 
 
 --
--- TOC entry 1894 (class 0 OID 0)
+-- TOC entry 1901 (class 0 OID 0)
 -- Dependencies: 24
 -- Name: get_project_issues(character varying); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1538,7 +1705,7 @@ GRANT ALL ON FUNCTION get_project_issues(name character varying) TO idiot_group;
 
 
 --
--- TOC entry 1895 (class 0 OID 0)
+-- TOC entry 1902 (class 0 OID 0)
 -- Dependencies: 22
 -- Name: get_projects(); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1551,8 +1718,8 @@ GRANT ALL ON FUNCTION get_projects() TO idiot_group;
 
 
 --
--- TOC entry 1896 (class 0 OID 0)
--- Dependencies: 46
+-- TOC entry 1903 (class 0 OID 0)
+-- Dependencies: 44
 -- Name: get_user(character varying); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1564,7 +1731,7 @@ GRANT ALL ON FUNCTION get_user(in_username character varying) TO idiot_group;
 
 
 --
--- TOC entry 1897 (class 0 OID 0)
+-- TOC entry 1904 (class 0 OID 0)
 -- Dependencies: 19
 -- Name: modify_user(character varying, character varying, character varying, character varying, character varying, character varying, boolean); Type: ACL; Schema: public; Owner: postgres
 --
@@ -1577,8 +1744,8 @@ GRANT ALL ON FUNCTION modify_user(username character varying, full_name characte
 
 
 --
--- TOC entry 1899 (class 0 OID 0)
--- Dependencies: 1557
+-- TOC entry 1906 (class 0 OID 0)
+-- Dependencies: 1563
 -- Name: comment_seq_seq; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1589,8 +1756,8 @@ GRANT ALL ON SEQUENCE comment_seq_seq TO idiot_group;
 
 
 --
--- TOC entry 1900 (class 0 OID 0)
--- Dependencies: 1559
+-- TOC entry 1907 (class 0 OID 0)
+-- Dependencies: 1565
 -- Name: exceptions; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1601,8 +1768,8 @@ GRANT ALL ON TABLE exceptions TO idiot_group;
 
 
 --
--- TOC entry 1902 (class 0 OID 0)
--- Dependencies: 1551
+-- TOC entry 1909 (class 0 OID 0)
+-- Dependencies: 1557
 -- Name: issue_seq_seq; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1613,8 +1780,8 @@ GRANT ALL ON SEQUENCE issue_seq_seq TO idiot_group;
 
 
 --
--- TOC entry 1903 (class 0 OID 0)
--- Dependencies: 1556
+-- TOC entry 1910 (class 0 OID 0)
+-- Dependencies: 1562
 -- Name: permission; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1625,8 +1792,8 @@ GRANT ALL ON TABLE permission TO idiot_group;
 
 
 --
--- TOC entry 1905 (class 0 OID 0)
--- Dependencies: 1555
+-- TOC entry 1912 (class 0 OID 0)
+-- Dependencies: 1561
 -- Name: permission_seq_seq; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -1636,7 +1803,7 @@ GRANT ALL ON SEQUENCE permission_seq_seq TO postgres;
 GRANT ALL ON SEQUENCE permission_seq_seq TO idiot_group;
 
 
--- Completed on 2010-05-09 10:01:31 CDT
+-- Completed on 2010-05-24 17:35:24 CDT
 
 --
 -- PostgreSQL database dump complete

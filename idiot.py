@@ -41,7 +41,7 @@ session = web.session.Session(app, web.session.DiskStore('sessions'),
 web.debug(session)
 #render = render_jinja('templates', encoding = 'utf-8')
 
-PER_PAGE = 20
+PER_PAGE = 15
 
 ### Jinja2 Related functions. TODO: Move somewhere else.
 
@@ -91,7 +91,7 @@ class WebModule:
                 out_config['yourself'] = None
             else:
                 out_config['logged'] = True
-                out_config['yourself'] = user[0]
+                out_config['yourself'] = user
         else:
             out_config['logged'] = False
             out_config['yourself'] = None
@@ -108,7 +108,7 @@ class WebModule:
         else:
             username = session.username
         return Issue.has_write_access(issue_seq,
-            username)[0].has_issue_write_access
+            username).has_issue_write_access
     
     def _project_allowed(self, project_name):
         """Private method for determining if a project is viewable by
@@ -120,8 +120,8 @@ class WebModule:
             username = session.username
         web.debug("Project Allowed: Username is %s" % username)
         access = Project.has_access(project_name,
-                username)[0].has_project_access
-        if Project.is_public(project_name)[0].project_is_public is True:
+                username).has_project_access
+        if Project.is_public(project_name).project_is_public is True:
             return True
         elif self.logged() and access is True:
             web.debug("Project %s allowed for user %s" % \
@@ -160,20 +160,20 @@ class IComment(WebModule):
 
     def POST(self):
         in_vars = self._get_vars(self.form_vars)
-        project = Issue.get(in_vars['seq'])[0].project
+        project = Issue.get(in_vars['seq']).project
 
-        if self._project_allowed(project):
+        if self._project_allowed(project.name):
             comment = Comment.create(in_vars['seq'], session.username,
-                in_vars['comment'])[0]
+                in_vars['comment'])
             
     def GET(self, comment_seq):
         
-        comment_thread = [c for c in Comment.get_thread(comment_seq)]
-        for index, comment in enumerate(comment_thread):
-            author = User.get(comment.author)[0]
-            comment_thread[index].author = author
-        issue = Issue.get(comment_thread[0].issue_seq)[0]
-        project = Project.get(issue.project)[0]
+        comment_thread = Comment.get_thread(comment_seq)
+        #for index, comment in enumerate(comment_thread):
+        #    author = User.get(comment.author)
+        #    comment_thread[index].author = author
+        issue = comment_thread[0].issue
+        project = issue.project
 
         if self._project_allowed(project.name):
             self.config['comments'] = comment_thread
@@ -189,11 +189,11 @@ class IComment(WebModule):
 class IIssue(WebModule):
 
     def GET(self, issue_id):
-        issue = Issue.get(issue_id)[0]
-        if self._project_allowed(issue.project):
+        issue = Issue.get(issue_id)
+        if self._project_allowed(issue.project.name):
             self.config['issue'] = issue
-            self.config['project'] = Project.get(issue.project)[0]
-            self.config['author'] = User.get(issue.author)[0]
+            self.config['project'] = issue.project
+            self.config['author'] = issue.author
             self.config['write_allowed'] = \
                 self._issue_write_allowed(issue_id)
             self.config['comments'] = []
@@ -201,14 +201,14 @@ class IIssue(WebModule):
                 self.config['comments'].append(thread)
             # Build an authors list and pull them from the list to save
             # some query currency.
-            authors = []
-            author_dict = {}
-            for index, comment in enumerate(self.config['comments']):
-                if comment.author not in [a.username for a in authors]:
-                    authors.append(User.get(comment.author)[0])
-                found_author = filter(lambda x: x.username == comment.author,
-                    authors)[0]
-                self.config['comments'][index].author = found_author
+            #authors = []
+            #author_dict = {}
+            #for index, comment in enumerate(self.config['comments']):
+            #    if comment.author not in [a.username for a in authors]:
+            #        authors.append(User.get(comment.author))
+            #    found_author = filter(lambda x: x.username == comment.author,
+            #        authors)[0]
+            #    self.config['comments'][index].author = found_author
 
             if hasattr(session, 'last_project') and \
                 hasattr(session, 'last_issue_page'):
@@ -225,13 +225,12 @@ class IProject(WebModule):
     def GET(self, project_name):
         if self._project_allowed(project_name):
             web.debug("Project allowed.")
-            result = Project.get(project_name)
-            project = result[0]
+            project = Project.get(project_name)
             web.debug('Project: %s' % repr(project))
             self.config['project'] = project
             result = Project.get_issue_page(project_name, 1, PER_PAGE)
             self.config['recent_issues'] = result
-            self.config['owner'] = User.get(project.owner)[0]
+            self.config['owner'] = project.owner
             session.last_project = project_name
         else:
             web.debug("Project disallowed.")
@@ -243,13 +242,12 @@ class IProject(WebModule):
 class IProjectIssues(WebModule):
     def GET(self, project_name, page=1):
         if self._project_allowed(project_name):
-            result = Project.get(project_name)
-            self.config['project'] = result[0]
+            self.config['project'] = Project.get(project_name) 
             result = Project.get_issue_page(project_name, page, PER_PAGE)
             self.config['issues'] = result
-            self.config['owner'] = User.get(self.config['project'].owner)[0]
             self.config['max_page'] = \
-                Project.get_max_issue_page(project_name, PER_PAGE)
+                int(Project.get_max_issue_page(project_name, PER_PAGE).get_project_max_issue_page)
+            web.debug("Page: " + str(page))
             if int(page) > 1:
                 self.config['prev_page_url'] = \
                     "%sproject/%s/issues/page/%d" % \
@@ -267,7 +265,7 @@ class IProjectIssues(WebModule):
 
 class IUser(WebModule):
     def GET(self, username):
-        user = User.get(username)[0]
+        user = User.get(username)
         if self.logged():
             viewing_user = session.username
         else:
@@ -293,7 +291,7 @@ class ILogin(WebModule):
 
     def POST(self):
         username, password = web.input().username, web.input().password 
-        if User.login(username, password)[0]['user_login'] is True:
+        if User.login(username, password)['user_login'] is True:
             session.logged_in = True
             session.username = username
             return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
@@ -320,9 +318,9 @@ class IUpdateIssue(WebModule):
         if self.logged() and \
             self._issue_write_allowed(seq):
 
-            issue = Issue.get(seq)[0]
+            issue = Issue.get(seq)
             self.config['issue'] = issue
-            self.config['project'] = Project.get(issue.project)[0]
+            #self.config['project'] = get_project(issue.project)
             self.config['severities'] = [severity.get_severities for \
                 severity in Issue.severities()]
             self.config['issue_types'] = [issue_type.get_issue_types for \
@@ -356,7 +354,7 @@ class ICreateIssue(WebModule):
             try:
                 new_issue = Issue.create(project, in_vars['summary'],
                     in_vars['description'], viewing_user,
-                    in_vars['severity'], in_vars['issue_type'])[0]
+                    in_vars['severity'], in_vars['issue_type'])
                 web.debug('New issue: %s' % repr(new_issue))
             except:
                 self.config['error'] = 'An error occurred while ' + \
@@ -369,7 +367,7 @@ class ICreateIssue(WebModule):
         if self.logged():
             viewing_user = session.username
             if project_name is not None:
-                self.config['project'] = Project.get(project_name)[0]
+                self.config['project'] = Project.get(project_name)
                 web.debug(self.config['project'])
             self.config['projects'] = [project.name for project in \
                 Project.all_for_user(viewing_user)]
@@ -411,7 +409,7 @@ class IRegister(WebModule):
             new_user = User.create(in_vars['username'], in_vars['full_name'],
                 in_vars['email'], in_vars['password'],
                 in_vars['password_confirm'], in_vars['url'], False,
-                in_vars['about_you'])[0]
+                in_vars['about_you'])
             web.debug('New User: %s' % new_user)
             if not hasattr(new_user, 'username'):
                 self.config['error'] = """An unexpected error occurred.
@@ -421,7 +419,7 @@ class IRegister(WebModule):
             session.username = new_user.username
             self.config['new_user'] = new_user
             if len(new_user.full_name) > 0:
-                self.config['first_name'] = new_user.full_name.split(' ')[0]
+                self.config['first_name'] = new_user.full_name.split(' ')
             else:
                 self.config['first_name'] = new_user.username
             return render_template('register_success.html', self.config)
