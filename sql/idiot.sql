@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Started on 2010-05-24 17:35:24 CDT
+-- Started on 2010-05-25 06:55:04 CDT
 
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -125,7 +125,7 @@ ALTER TABLE public.issue OWNER TO postgres;
 
 --
 -- TOC entry 51 (class 1255 OID 138668)
--- Dependencies: 370 3 343
+-- Dependencies: 3 370 343
 -- Name: create_issue(character varying, character varying, character varying, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -183,8 +183,8 @@ $_$;
 ALTER FUNCTION public.create_project(name character varying, full_name character varying, description character varying, owner character varying, public boolean) OWNER TO postgres;
 
 --
--- TOC entry 57 (class 1255 OID 138691)
--- Dependencies: 3 370
+-- TOC entry 56 (class 1255 OID 138691)
+-- Dependencies: 370 3
 -- Name: create_thread(integer, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -238,7 +238,7 @@ ALTER TABLE public."user" OWNER TO postgres;
 
 --
 -- TOC entry 46 (class 1255 OID 130875)
--- Dependencies: 3 347 370
+-- Dependencies: 347 370 3
 -- Name: create_user(character varying, character varying, character varying, character varying, character varying, character varying, boolean, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -440,8 +440,8 @@ $$;
 ALTER FUNCTION public.get_issue_statuses() OWNER TO postgres;
 
 --
--- TOC entry 58 (class 1255 OID 138693)
--- Dependencies: 3 355 370
+-- TOC entry 57 (class 1255 OID 138693)
+-- Dependencies: 3 370 355
 -- Name: get_issue_threads(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -462,7 +462,7 @@ ALTER FUNCTION public.get_issue_threads(issue_seq integer) OWNER TO postgres;
 
 --
 -- TOC entry 54 (class 1255 OID 138667)
--- Dependencies: 370 3
+-- Dependencies: 3 370
 -- Name: get_issue_types(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -648,7 +648,7 @@ ALTER FUNCTION public.get_projects() OWNER TO postgres;
 
 --
 -- TOC entry 38 (class 1255 OID 130851)
--- Dependencies: 369 3 345
+-- Dependencies: 3 345 369
 -- Name: get_projects(boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -675,7 +675,7 @@ ALTER FUNCTION public.get_projects(public_only boolean) OWNER TO postgres;
 
 --
 -- TOC entry 37 (class 1255 OID 130850)
--- Dependencies: 345 370 3
+-- Dependencies: 3 345 370
 -- Name: get_public_project_page(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -718,7 +718,7 @@ ALTER FUNCTION public.get_public_project_page(page integer, per_page integer) OW
 
 --
 -- TOC entry 53 (class 1255 OID 138666)
--- Dependencies: 370 3
+-- Dependencies: 3 370
 -- Name: get_severities(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -772,7 +772,7 @@ ALTER FUNCTION public.get_thread(seq integer) OWNER TO postgres;
 
 --
 -- TOC entry 44 (class 1255 OID 130868)
--- Dependencies: 347 3 369
+-- Dependencies: 369 3 347
 -- Name: get_user(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -797,7 +797,7 @@ ALTER FUNCTION public.get_user(in_username character varying) OWNER TO postgres;
 
 --
 -- TOC entry 42 (class 1255 OID 130847)
--- Dependencies: 345 3 370
+-- Dependencies: 345 370 3
 -- Name: get_user_project_page(integer, integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -850,7 +850,7 @@ ALTER FUNCTION public.get_user_project_page(page integer, per_page integer, user
 
 --
 -- TOC entry 50 (class 1255 OID 138665)
--- Dependencies: 3 345 370
+-- Dependencies: 370 3 345
 -- Name: get_user_projects(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -882,7 +882,7 @@ ALTER FUNCTION public.get_user_projects(username character varying) OWNER TO pos
 
 --
 -- TOC entry 48 (class 1255 OID 130916)
--- Dependencies: 3 355 370
+-- Dependencies: 370 3 355
 -- Name: get_user_recent_comments(character varying, character varying, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -907,7 +907,7 @@ ALTER FUNCTION public.get_user_recent_comments(viewed_user character varying, vi
 
 --
 -- TOC entry 47 (class 1255 OID 130918)
--- Dependencies: 343 370 3
+-- Dependencies: 3 370 343
 -- Name: get_user_recent_issues(character varying, character varying, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -934,7 +934,7 @@ $_$;
 ALTER FUNCTION public.get_user_recent_issues(viewed_user character varying, viewing_user character varying, count integer) OWNER TO postgres;
 
 --
--- TOC entry 55 (class 1255 OID 138670)
+-- TOC entry 58 (class 1255 OID 138670)
 -- Dependencies: 369 3
 -- Name: has_issue_write_access(integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
@@ -943,6 +943,10 @@ CREATE FUNCTION has_issue_write_access(issue_seq integer, username character var
     LANGUAGE plpgsql STABLE
     AS $_$
 BEGIN
+IF username = '' THEN
+    RETURN FALSE;
+END IF;
+
 RETURN $2 IN (
     SELECT author
     FROM issue
@@ -960,7 +964,7 @@ ALTER FUNCTION public.has_issue_write_access(issue_seq integer, username charact
 
 --
 -- TOC entry 41 (class 1255 OID 130853)
--- Dependencies: 369 3
+-- Dependencies: 3 369
 -- Name: has_project_access(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1008,8 +1012,8 @@ $_$;
 ALTER FUNCTION public.modify_comment(seq integer, comment character varying) OWNER TO postgres;
 
 --
--- TOC entry 56 (class 1255 OID 130921)
--- Dependencies: 370 3
+-- TOC entry 55 (class 1255 OID 130921)
+-- Dependencies: 3 370
 -- Name: modify_issue(integer, character varying, character varying, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1036,7 +1040,7 @@ ALTER FUNCTION public.modify_issue(seq integer, summary character varying, descr
 
 --
 -- TOC entry 20 (class 1255 OID 130639)
--- Dependencies: 370 3
+-- Dependencies: 3 370
 -- Name: modify_permission(character varying, character varying, boolean, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1179,7 +1183,7 @@ ALTER FUNCTION public.modify_user(seq integer, username character varying, full_
 
 --
 -- TOC entry 36 (class 1255 OID 130855)
--- Dependencies: 3 369
+-- Dependencies: 369 3
 -- Name: project_is_public(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1256,7 +1260,7 @@ ALTER FUNCTION public.tr_no_cross_project_comments() OWNER TO postgres;
 
 --
 -- TOC entry 39 (class 1255 OID 130856)
--- Dependencies: 369 3
+-- Dependencies: 3 369
 -- Name: user_login(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1277,7 +1281,7 @@ ALTER FUNCTION public.user_login(login_username character varying, login_passwor
 
 --
 -- TOC entry 40 (class 1255 OID 130857)
--- Dependencies: 3 369
+-- Dependencies: 369 3
 -- Name: user_verify(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1803,7 +1807,7 @@ GRANT ALL ON SEQUENCE permission_seq_seq TO postgres;
 GRANT ALL ON SEQUENCE permission_seq_seq TO idiot_group;
 
 
--- Completed on 2010-05-24 17:35:24 CDT
+-- Completed on 2010-05-25 06:55:04 CDT
 
 --
 -- PostgreSQL database dump complete
