@@ -3,9 +3,10 @@
 {% import 'issue_table.html' as issue_table with context %}
 
 {% block header %}
-Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: <a href="{{idiot_app_path}}user/{{project.owner.username}}">{{project.owner.full_name}}</a>
+{% import 'project_header.html' as project_header with context %}
+{{ project_header.project_header(project) }}
 {% endblock %}
+
 
 {% block content %}
 {% if not error %}

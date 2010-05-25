@@ -1,0 +1,10 @@
+{%- macro project_header(project) -%}
+
+{% if not error %}
+Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
+Owner: <a href="{{idiot_app_path}}user/{{project.owner.username}}">{{project.owner.full_name}}</a>
+{% else %}
+Error
+{% endif %}
+
+{%- endmacro %}

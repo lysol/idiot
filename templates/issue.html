@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
 {% block header %}
-Project: <a href="{{idiot_app_path}}project/{{project.name}}/">{{project.full_name}}</a><br />
-Owner: <a href="{{idiot_app_path}}user/{{project.owner.username}}">{{project.owner.full_name}}</a>
+{% import 'project_header.html' as project_header with context %}
+{{ project_header.project_header(project) }}
 {% endblock %}
+
 
 {% block title_crumbs %} - Issue {{issue.seq}}: {{issue.summary}}{% endblock %}
 

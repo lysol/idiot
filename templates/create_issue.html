@@ -2,7 +2,8 @@
 
 {% block header %}
 {% if project is defined %}
-<b>{{ project.full_name }}</b>
+{% import 'project_header.html' as project_header with context %}
+{{ project_header.project_header(project) }}
 {% else %}
 Create an Issue
 {% endif %}

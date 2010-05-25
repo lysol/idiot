@@ -45,18 +45,12 @@ class Function:
                 web.debug("Checking key %s" % key)
                 if key in self._get_fks().keys():
                     web.debug("Adding child.")
-                    child = self._get_fks()[key](result[key])
+                    child = self._get_fks()[key](result[key])[0]
                     key = re.sub('_seq$', '', key)
                     result[key] = child
             web.debug("Appending result.")            
             results.append(result)
-        if len(results) == 1:
-            web.debug("Returning one row.")
-            web.debug("Value: %s" % repr(results[0]))
-            return results[0]
-        else:
-            web.debug("Returning a set.")
-            return results
+        return results
             
 
     def __init__(self, function_name, arguments=[], fks=None,
@@ -91,15 +85,12 @@ class Raw:
                 web.debug("Checking key %s" % key)
                 if key in self._get_fks().keys():
                     web.debug("Adding child.")
-                    child = self._get_fks()[key](result[key])
+                    child = self._get_fks()[key](result[key])[0]
                     key = re.sub('_seq$', '', key)
                     result[key] = child
             web.debug("Appending result.")
             results.append(result)
-        if len(results) == 1:
-            return results[0]
-        else:
-            return results
+        return results
 
     def __init__(self, query, arguments=[], fks=None):
         self.query = query
