@@ -4,7 +4,7 @@ idiot
 Idiot is a bare-bones issue tracker intended for use with small workgroups or
 other situations without complex requirements in an issue tracker.
 
-It's all written in Python using the [web.py](http://webpy.org)/ "web.py")
+It's all written in Python using the [web.py](http://webpy.org/ "web.py")
 framework, and accesses a PostgreSQL database using function wrapping classes.
 Business logic will be moved to the functions themselves at a future point but
 for now they provide a way to reduce the amount of SQL executed from the
