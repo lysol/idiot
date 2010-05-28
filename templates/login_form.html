@@ -3,15 +3,16 @@
 You're not logged in. Would you like to <a id="show_login" href="javascript:void();">login</a>, or <a href="{{idiot_app_path}}register">register</a>?
 </div>
 <div id="login_form">
-<form action="/login" method="POST">
+<form name="login_form" action="/login" method="POST">
 	<p>Username<br />
 	{{ forms.input('username', class='login') }}
 	</p>
 	<p>Password<br />
   {{ forms.input('password', type='password', class='login') }}
 	</p>
-	<p>
-	{{ forms.input('login', value='Login', type='submit', class='login') }}
-	</p>
+	
+	<a class="button" href="javascript:void();" onclick="document.login_form.submit()">Login</a>
+	
+
 </form>
 </div>

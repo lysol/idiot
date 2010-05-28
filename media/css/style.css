@@ -226,3 +226,26 @@ tr.issue_table_head td {
 div#comment_form {
 		margin-bottom: 3em;
 }
+
+div#login_form {
+		margin-bottom: 1em;
+}
+
+div.error {
+		color: #FF0000;
+		font-weight: bold;
+		background-color: #FFFFEE;
+		-webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+		padding: 1.5em;
+		border: 1px solid #E0E0EA;
+}
+
+input, textarea {
+		border: 1px solid #A0A0AA;
+		-webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+		padding: 3px;
+}

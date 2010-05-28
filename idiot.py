@@ -5,7 +5,9 @@ import web
 from ConfigParser import ConfigParser
 from jinja2 import Environment, FileSystemLoader
 from model import *
+import controller
 import os
+from uuid import uuid4
 
 urls = (
     '/?', 'IMain',
@@ -24,6 +26,7 @@ urls = (
 	'/issue/(\d+)/?', 'IIssue',
     '/comment/(\d+)/?', 'IComment',
     '/comment/?', 'IComment',
+    '/confirm/([a-zA-Z0-9\-]+)/?', 'IConfirmEmail',
 )
 
 web.config.debug = False 
@@ -137,7 +140,13 @@ class WebModule:
 
 class IMain(WebModule):
     def GET(self):
-        return web.seeother('/page/1/')
+        if not self.logged():
+            username = ''
+        else:
+            username = session.username
+        results = Project().get_project_page(1, PER_PAGE, username)
+        self.config['projects'] = results
+        return render_template('browse.html', self.config)
 
 
 class IBrowse(WebModule):
@@ -225,6 +234,15 @@ class IProject(WebModule):
             return render_template('error.html', self.config)
         return render_template('project.html', self.config)
 
+class IConfirmEmail(WebModule):
+    def GET(self, auth_key):
+        email_confirmed = EmailConfirm.confirm(auth_key)
+        if email_confirmed[0].confirm_email is True:
+            return render_template('email_confirmed.html', self.config)
+        else:
+            self.config['error'] = 'Confirmation not found. This email ' + \
+                'address may have already been confirmed.'
+            return render_template('error.html', self.config)
 
 class IProjectIssues(WebModule):
     def GET(self, project_name, page=1):
@@ -285,7 +303,7 @@ class ILogin(WebModule):
         if User.login(username, password)[0]['user_login'] is True:
             session.logged_in = True
             session.username = username
-            return web.seeother(web.ctx.env.get('HTTP_REFERER','/'))
+            return web.seeother('/')
         else:
             self.config['error'] = 'Login failed.'
             return render_template('error.html', self.config) 
@@ -387,6 +405,8 @@ class IRegister(WebModule):
                 'You must specify a password of at least six characters.'
         elif len(User.get(in_vars['username'])) > 0:
             self.config['error'] = 'This username already exists.'
+        elif len(User.get_by_email(in_vars['email'])) > 0:
+            self.config['error'] = 'This email address is already registered.'
         elif '@' not in in_vars['email']:
             self.config['error'] = 'This email address is not valid.'
         elif not re.match('^[a-zA-Z0-9_]+$', in_vars['username']):
@@ -406,13 +426,17 @@ class IRegister(WebModule):
                 self.config['error'] = """An unexpected error occurred.
                     Please notify an administrator."""
                 return render_template('error.html', self.config)
-            session.logged_in = True
-            session.username = new_user.username
+            #session.username = new_user.username
             self.config['new_user'] = new_user
             if len(new_user.full_name) > 0:
                 self.config['first_name'] = new_user.full_name.split(' ')[0]
             else:
                 self.config['first_name'] = new_user.username
+
+            auth_key = str(uuid4())
+            EmailConfirm.create(new_user.username, auth_key)
+            controller.send_email_confirmation(new_user.full_name,
+                new_user.email, auth_key)
             return render_template('register_success.html', self.config)
 
     def GET(self):

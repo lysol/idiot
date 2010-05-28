@@ -104,6 +104,7 @@ class User:
 
     all = Function("get_all_users")
     get = Function("get_user", ['username'])
+    get_by_email = Function("get_user_by_email", ['email'])
     get_page = Function("get_user_page", ['page'])
     delete = Function ("delete_user", ['username'])
     create = Function("create_user", ['username', 'full_name', 'email',
@@ -210,3 +211,12 @@ class Comment:
         fks='Comment')
     get_issue_threads = Function("get_issue_threads", ['issue_seq'],
         fks='Comment')
+
+class EmailConfirm:
+
+    foreign_keys = {
+        'username': User.get
+        }
+
+    create = Function("create_email_confirmation", ["username", "auth_key"])
+    confirm = Function("confirm_email", ["auth_key"])
