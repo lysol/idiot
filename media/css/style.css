@@ -222,3 +222,7 @@ tr.issue_table_head td {
 		border-bottom: 1px dotted #C0C0CA;
 		
 }
+
+div#comment_form {
+		margin-bottom: 3em;
+}

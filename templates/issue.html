@@ -27,7 +27,7 @@
 						</p>
 				{% endif %}
 
-				{% if comments|count > 1 %}
+				{% if comments|count > 0 %}
 
 						<div class="comment_block">
 								<h3>Comments</h3>
@@ -42,12 +42,14 @@
 				{% endif %}
 
 				{% if logged %}
-
-						<p id="comment_form">
-
-
-
-						</p>
+						<div id="comment_form">
+							<h3>Add a comment</h3>
+							<form action="{{idiot_app_path}}comment" method="POST">
+							{% import 'comment_form.html' as comment_form with context %}
+							{{ comment_form }}
+							<a href="javascript:void()" onclick="parentNode.submit()" class="button">Add Comment</a>
+							</form>
+						</div>
 
 				{% endif %}
 

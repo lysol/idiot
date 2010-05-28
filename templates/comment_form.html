@@ -1,23 +1,11 @@
 {% import 'forms.html' as forms %}
 
+	{% if issue is defined %}
 
-	{% if project is defined %}
-	{{ forms.input('project', type='hidden', value=project.name) }}
-	{% else %}
-  <p>Project<br />
-	{{ forms.select('project', options=projects) }}
-	</p>
-  {% endif %}
-	<p>Summary<br />
-	{{ forms.input('summary') }}
-	</p>
-	<p>Full description of your issue<br />
-	{{ forms.textarea('description') }}
-	</p>
-	<p>Severity<br />
-	{{ forms.select('severity', options=severities) }}
-	</p>
-	<p>Type<br />
-  {{ forms.select('issue_type', options=issue_types) }}
+	<p>
+	{{ forms.textarea('comment') }}
 	</p>
 
+	{{ forms.input('issue_seq', type='hidden', value=issue.seq) }}
+
+	{% endif %}

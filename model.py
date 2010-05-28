@@ -42,13 +42,14 @@ class Function:
         results = []
         for result in [result for result in db.query(query, vars=arg_dict)]:
             for key in result.keys():
-                web.debug("Checking key %s" % key)
-                if key in self._get_fks().keys():
+                #web.debug("Checking key %s" % key)
+                if key in self._get_fks().keys() and result[key] is not None:
                     web.debug("Adding child.")
                     child = self._get_fks()[key](result[key])[0]
                     key = re.sub('_seq$', '', key)
                     result[key] = child
             web.debug("Appending result.")            
+            web.debug(repr(result))
             results.append(result)
         return results
             
@@ -82,13 +83,14 @@ class Raw:
         for result in [result for result in db.query(self.query,
             vars=arg_dict)]:
             for key in result.keys():
-                web.debug("Checking key %s" % key)
-                if key in self._get_fks().keys():
+                #web.debug("Checking key %s" % key)
+                if key in self._get_fks().keys() and result[key] is not None:
                     web.debug("Adding child.")
                     child = self._get_fks()[key](result[key])[0]
                     key = re.sub('_seq$', '', key)
                     result[key] = child
             web.debug("Appending result.")
+            web.debug(repr(result))
             results.append(result)
         return results
 

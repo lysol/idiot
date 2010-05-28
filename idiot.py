@@ -153,16 +153,17 @@ class IBrowse(WebModule):
 
 class IComment(WebModule):
 
-    form_vars = ['summary', 'description', 'severity',
-        'issue_type', 'issue_status']
+    form_vars = ['comment', 'issue_seq']
 
     def POST(self):
         in_vars = self._get_vars(self.form_vars)
-        project = Issue.get(in_vars['seq'])[0].project
+        project = Issue.get(in_vars['issue_seq'])[0].project
 
         if self._project_allowed(project.name):
-            comment = Comment.create(in_vars['seq'], session.username,
-                in_vars['comment'])[0]
+            comment = Comment.create(in_vars['issue_seq'], session.username,
+                in_vars['comment'])
+            self.config['comments'] = comment
+            return web.seeother('/issue/%d#%d' % (comment[0].issue_seq, comment[0].seq))
             
     def GET(self, comment_seq):
         
@@ -193,6 +194,7 @@ class IIssue(WebModule):
                 self._issue_write_allowed(issue_id)
             self.config['comments'] = []
             for thread in Comment.get_issue_threads(issue_id):
+                web.debug("GRABBING THREAD: %s" % repr(thread))
                 self.config['comments'].append(thread)
             if hasattr(session, 'last_project') and \
                 hasattr(session, 'last_issue_page'):

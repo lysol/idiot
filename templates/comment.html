@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
+{% import 'comment_single.html' as comment_single with context %}
+
 {% block header %}
 {% import 'project_header.html' as project_header with context %}
-{{ project_header.project_header(project) }}
+{{ project_header.project_header(comments[0].issue.project) }}
 {% endblock %}
-
 
 
 {% block title_crumbs %} - Comment {{ comments[0].seq }} and replies{% endblock %}
@@ -15,10 +16,7 @@
 <h2>Comment #{{ comments[0].seq }} and replies</h2>
 
 {% for comment in comments %}
-  <div class="comment">
-    <div class="comment_head"><a href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on {{ comment.timestamp|datetimeformat }}</div>
-  {{ comment.comment }}
-  </div>
+  {{ comment_single.make_comment(comment) }}
 {% endfor %}
 
 {% else %}

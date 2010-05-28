@@ -1,6 +1,6 @@
 {%- macro make_comment(comment) -%}
   <div class="comment">
-    <div class="comment_head"><a href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on <a href="{{ idiot_app_path}}comment/{{ comment.seq }}">{{ comment.timestamp|datetimeformat }}</a></div>
+    <div class="comment_head"><a name="{{ comment.seq }}" href="{{ idiot_app_path }}user/{{ comment.author.username }}">{{ comment.author.full_name }}</a> on <a href="{{ idiot_app_path}}issue/{{ comment.issue_seq }}#{{ comment.seq }}">{{ comment.timestamp|datetimeformat }}</a></div>
 		<div class="comment_body">
     {{ comment.comment }}
 	  </div>
